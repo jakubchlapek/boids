@@ -14,12 +14,13 @@ object BoidsFx extends JFXApp3 {
   // config parameters
   val worldWidth: Double = 800
   val worldHeight: Double = 600
-  val boidsCount: Int = 100
+  val boidsCount: Int = 300
 
-  val detectionRange: Double = 50
+  val detectionRange: Double = 25
+  val maxTurnRate = 0.05 // radians per frame
 
-  val cohesionStrength: Double = 0.01
-  val alignmentStrength: Double = 0.05
+  val cohesionStrength: Double = 0.03
+  val alignmentStrength: Double = 0.07
   val separationStrength: Double = 0.2
   val separationDistance: Double = 10
 
@@ -32,7 +33,7 @@ object BoidsFx extends JFXApp3 {
       val neighbors: Seq[Boid] = allBoids.filter(
         nbor => nbor != boid && nbor.position.distance(boid.position) < detectionRange
       )
-      var steerAngleSum: AngleRad = 0
+      var steerAngleSum: AngleRad = 0.0
       if (neighbors.nonEmpty)
         // COHESION
         // get centre of mass (mean pos) of all neighbors
@@ -66,8 +67,8 @@ object BoidsFx extends JFXApp3 {
 
         steerAngleSum += separationStrength * separationAngle
       }
-
-      boid.angle += steerAngleSum.normalizeAngle
+      val turnAmount: AngleRad = -maxTurnRate max steerAngleSum.normalizeAngle min maxTurnRate
+      boid.angle += turnAmount
       boid.shape.rotate = boid.angle.toDegrees
 
       // if outside boundaries then jump to the other side
@@ -86,7 +87,7 @@ object BoidsFx extends JFXApp3 {
       val x: Double = math.random() * worldWidth
       val y: Double = math.random() * worldHeight
       val angle: AngleRad = math.random() * 2 * math.Pi
-      Boid(position = Point2D(x, y), angle = angle, velocity = 1)
+      Boid(position = Point2D(x, y), angle = angle, velocity = 0.5, size=5)
     }
     rootGroup.children ++= boids.map(_.shape)
     boids

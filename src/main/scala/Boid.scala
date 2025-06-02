@@ -1,9 +1,9 @@
 import scalafx.scene.paint.Color
 import scalafx.scene.shape.Polygon
 
-case class Boid(var position: Point2D, var angle: AngleRad, var velocity: Double):
+case class Boid(var position: Point2D, var angle: AngleRad, var velocity: Double, size: Double = 10):
   val shape: Polygon = new Polygon {
-    points ++= Seq(10.0, 0.0, -5.0, 5.0, -5.0, -5.0) // right-facing triangle
+    points ++= Seq(size, 0.0, -size/2, size/2, -size/2, -size/2) // right-facing triangle
     fill = Color.White
     translateX = position.x
     translateY = position.y
