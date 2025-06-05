@@ -1,3 +1,4 @@
+import BoidsFx.{maxSpeed, minSpeed, worldHeight, worldWidth}
 import scalafx.scene.paint.Color
 import scalafx.scene.shape.Polygon
 
@@ -34,7 +35,62 @@ case class Boid(var position: Point2D, var velocity: Point2D, size: Double = 10)
 
     // Limit the maximum steering force
     val steerMagnitude = math.sqrt(steerForce.x * steerForce.x + steerForce.y * steerForce.y)
-    if steerMagnitude > maxForce then
+    if (steerMagnitude > maxForce)
       steerForce / steerMagnitude * maxForce
     else
       steerForce
+
+  /** slows and turns boid around when he touches the borders */
+  private def constrainToBoundaries(): Unit = {
+    val constrainedPos = Point2D( // clamp to 2 pixels - (max - 2)
+      math.max(2, math.min(worldWidth - 2, this.position.x)),
+      math.max(2, math.min(worldHeight - 2, this.position.y))
+    )
+
+    // when they reach the edge of the screen they will bounce
+    if (constrainedPos.x != this.position.x)
+      this.velocity = this.velocity * Point2D(-1, 1)
+    if (constrainedPos.y != this.position.y)
+      this.velocity = this.velocity * Point2D(1, -1)
+
+    this.position = constrainedPos
+    this.shape.translateX = constrainedPos.x
+    this.shape.translateY = constrainedPos.y
+  }
+
+  def applyPhysics(steeringForce: Point2D): Unit = {
+    applyForce(steeringForce)
+    velocity = velocity.limit(maxSpeed)
+    position = move()
+    constrainToBoundaries()
+    updateColorBasedOnSpeed(minSpeed, maxSpeed)
+  }
+
+  def updateColorBasedOnSpeed(minSpeed: Double, maxSpeed: Double): Unit = {
+    val speed = velocity.magnitude
+
+    // (red for slow, green for medium, blue for fast)
+    val normalizedSpeed = (speed - minSpeed) / (maxSpeed - minSpeed)
+    val clampedSpeed = math.max(0.0, math.min(1.0, normalizedSpeed))
+
+    val color = if (clampedSpeed < 0.5) {
+      // red to green (through yellow)
+      val ratio = clampedSpeed * 2
+      Color.rgb(
+        255,
+        (255 * ratio).toInt,
+        0
+      )
+    } else {
+      // green to blue (through cyan)
+      val ratio = (clampedSpeed - 0.5) * 2
+      Color.rgb(
+        (255 * (1 - ratio)).toInt,
+        255,
+        (255 * ratio).toInt
+      )
+    }
+
+    shape.fill = color
+  }
+
