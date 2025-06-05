@@ -11,22 +11,19 @@ object BoidsFx extends JFXApp3 {
   val worldWidth: Double = 1200
   val worldHeight: Double = 800
   val boidsCount: Int = 100
-  val detectionRange: Double = 40
+  val detectionRange: Double = 30
   val maxForce = 0.7 // max flocking force
   val maxSpeed: Double = 2.0
   val minSpeed: Double = maxSpeed / 5
-  val cohesionStrength: Double = 0.02
-  val alignmentStrength: Double = 0.08
+  val cohesionStrength: Double = 0.01
+  val alignmentStrength: Double = 0.03
   val separationStrength: Double = 0.8
-  val separationDistance: Double = 20
-  val boundaryMargin: Double = 50
-  val boundaryForce: Double = 0.06
+  val separationDistance: Double = 15
 
   val flockingBehavior = new FlockingBehavior(
     maxSpeed, maxForce, detectionRange,
     cohesionStrength, alignmentStrength,
     separationStrength, separationDistance,
-    boundaryMargin, boundaryForce,
     worldWidth, worldHeight
   )
   var allBoids: Seq[Boid] = Seq()
@@ -41,10 +38,8 @@ object BoidsFx extends JFXApp3 {
       boid.applyForce(force)
       // move the boid
       boid.applyPhysics()
-
-
-
     })
+
     if (allBoids.nonEmpty) {
       val firstBoid = allBoids.head
       detectionCircle.centerX = firstBoid.position.x
@@ -58,8 +53,8 @@ object BoidsFx extends JFXApp3 {
   def initializeBoids(rootGroup: Group, boidsCount: Int): Seq[Boid] = {
     // initiated at start
     val boids: Seq[Boid] = for (i <- 0 until boidsCount) yield {
-      val x: Double = math.random() * (worldWidth - 2 * boundaryMargin) + boundaryMargin
-      val y: Double = math.random() * (worldHeight - 2 * boundaryMargin) + boundaryMargin
+      val x: Double = math.random() * worldWidth
+      val y: Double = math.random() * worldHeight
 
       // create random initial velocity
       val velX: Double = (math.random() * 2 - 1) * (maxSpeed / 4) // between -1 and 1 times maxSpeed / 4
@@ -105,19 +100,6 @@ object BoidsFx extends JFXApp3 {
 
   override def start(): Unit = {
     val rootGroup: Group = new Group()
-
-    // boundaries
-    val safeAreaBorder = new scalafx.scene.shape.Rectangle {
-      x = boundaryMargin
-      y = boundaryMargin
-      width = worldWidth - 2 * boundaryMargin
-      height = worldHeight - 2 * boundaryMargin
-      fill = Color.Transparent
-      stroke = Color.White
-      strokeWidth = 1
-      strokeDashArray = Seq(5, 5)
-    }
-    rootGroup.children.add(safeAreaBorder)
 
     allBoids = initializeBoids(rootGroup, boidsCount)
 

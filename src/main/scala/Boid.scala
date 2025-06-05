@@ -45,22 +45,25 @@ case class Boid(var position: Point2D,
 
   /** slows and turns boid around when he touches the borders */
   private def constrainToBoundaries(): Unit = {
-    val constrainedPos = Point2D( // clamp to 2 pixels - (max - 2)
-      math.max(2, math.min(worldWidth - 2, this.position.x)),
-      math.max(2, math.min(worldHeight - 2, this.position.y))
-    )
+    var newX = position.x
+    var newY = position.y
 
-    // when they reach the edge of the screen they will bounce
-    if (constrainedPos.x != this.position.x)
-      this.velocity = this.velocity * Point2D(-1, 1)
-    if (constrainedPos.y != this.position.y)
-      this.velocity = this.velocity * Point2D(1, -1)
+    // x axis
+    if (position.x < 0) newX = worldWidth
+    else if (position.x > worldWidth) newX = 0
 
-    this.position = constrainedPos
-    this.shape.translateX = constrainedPos.x
-    this.shape.translateY = constrainedPos.y
+    // y axis
+    if (position.y < 0) newY = worldHeight
+    else if (position.y > worldHeight) newY = 0
+
+    // if moved
+    if (newX != position.x || newY != position.y) {
+      position = Point2D(newX, newY)
+      shape.translateX = position.x
+      shape.translateY = position.y
+    }
   }
-
+  
   def applyPhysics(): Unit = {
     velocity += acceleration
     acceleration = Point2D(0, 0)
