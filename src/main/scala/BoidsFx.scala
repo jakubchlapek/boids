@@ -55,7 +55,6 @@ object BoidsFx extends JFXApp3 {
         val desiredAlignmentPoint = averageVelocity - boid.velocity
         val alignmentForce = desiredAlignmentPoint.limit(maxForce) * alignmentStrength
 
-        // Add forces to the steering force
         steeringForce = steeringForce + cohesionForce + alignmentForce
       }
 
@@ -66,22 +65,22 @@ object BoidsFx extends JFXApp3 {
       )
 
       if (tooCloseNeighbors.nonEmpty) {
-        // vector pointing away (average of differences)
+        // vector pointing away
         val repulsionVector: Point2D = tooCloseNeighbors
-          .map(nbor => boid.position - nbor.position)
+          .map { nbor =>
+            val diff = boid.position - nbor.position
+            val distance = diff.magnitude
+            if (distance != 0) diff / distance else Point2D(0, 0) // create a stronger force the closer neighbors are
+          }
           .reduce(_ + _) / tooCloseNeighbors.size
 
-        // create a stronger force the closer neighbors are
-        val separationForce = repulsionVector.limit(maxForce) * separationStrength
-
         // add separation force
+        val separationForce = repulsionVector.limit(maxForce) * separationStrength
         steeringForce = steeringForce + separationForce
       }
 
-      // Apply the combined steering force
+      // apply the combined steering force
       boid.applyForce(steeringForce)
-
-      // Limit velocity to maximum speed
       boid.velocity = boid.velocity.limit(maxSpeed)
 
       // Move the boid
