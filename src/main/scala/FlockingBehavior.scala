@@ -20,7 +20,7 @@ class FlockingBehavior(
     val cohesion = if (neighbors.nonEmpty) calculateCohesionForce(boid, neighbors) else Point2D(0, 0)
     val alignment = if (neighbors.nonEmpty) calculateAlignmentForce(boid, neighbors) else Point2D(0, 0)
     val separation = if (closeNeighbors.nonEmpty) calculateSeparationForce(boid, closeNeighbors) else Point2D(0, 0)
-    val boundary = calculateBoundaryForce(boid.position)
+    val boundary = calculateBoundaryForce(boid.position, boid.velocity)
 
     cohesion + alignment + separation + boundary
   }
@@ -68,18 +68,27 @@ class FlockingBehavior(
   }
 
   /** calculate force repelling from the borders */
-  def calculateBoundaryForce(position: Point2D): Point2D = {
+  def calculateBoundaryForce(position: Point2D, velocity: Point2D): Point2D = {
     var force = Point2D(0, 0)
 
-    if (position.x < boundaryMargin)
-      force += Point2D(1, 0) * ((boundaryMargin - position.x) / boundaryMargin)
-    else if (position.x > worldWidth - boundaryMargin)
-      force += Point2D(-1, 0) * ((position.x - (worldWidth - boundaryMargin)) / boundaryMargin)
+    for (dim <- 0 to 1) {
+      val pos = if (dim == 0) position.x else position.y
+      val vel = if (dim == 0) velocity.x else velocity.y
+      val size = if (dim == 0) worldWidth else worldHeight
 
-    if (position.y < boundaryMargin)
-      force += Point2D(0, 1) * ((boundaryMargin - position.y) / boundaryMargin)
-    else if (position.y > worldHeight - boundaryMargin)
-      force += Point2D(0, -1) * ((position.y - (worldHeight - boundaryMargin)) / boundaryMargin)
+      if (pos < boundaryMargin) {
+        val distFactor = 1 - pos / boundaryMargin
+        val velFactor = if (vel < 0) math.abs(vel) / maxSpeed * 0.5 else 0
+        val dir = if (dim == 0) Point2D(1, 0) else Point2D(0, 1)
+        force += dir * (distFactor + velFactor)
+      }
+      else if (pos > size - boundaryMargin) {
+        val distFactor = 1 - (size - pos) / boundaryMargin
+        val velFactor = if (vel > 0) math.abs(vel) / maxSpeed * 0.5 else 0
+        val dir = if (dim == 0) Point2D(-1, 0) else Point2D(0, -1)
+        force += dir * (distFactor + velFactor)
+      }
+    }
 
     force * boundaryForce
   }

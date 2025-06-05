@@ -2,7 +2,10 @@ import BoidsFx.{maxSpeed, minSpeed, worldHeight, worldWidth}
 import scalafx.scene.paint.Color
 import scalafx.scene.shape.Polygon
 
-case class Boid(var position: Point2D, var velocity: Point2D, size: Double = 10):
+case class Boid(var position: Point2D,
+                var velocity: Point2D,
+                var acceleration: Point2D = Point2D(0, 0),
+                size: Double = 10):
   val shape: Polygon = new Polygon {
     points ++= Seq(size, 0.0, -size/2, size/2, -size/2, -size/2) // right-facing triangle
     fill = Color.White
@@ -27,7 +30,7 @@ case class Boid(var position: Point2D, var velocity: Point2D, size: Double = 10)
     position
 
   def applyForce(force: Point2D): Unit =
-    velocity = velocity + force
+    acceleration += force
 
   def seek(targetPoint: Point2D, maxForce: Double = 0.1): Point2D =
     val desired = targetPoint - position
@@ -58,8 +61,9 @@ case class Boid(var position: Point2D, var velocity: Point2D, size: Double = 10)
     this.shape.translateY = constrainedPos.y
   }
 
-  def applyPhysics(steeringForce: Point2D): Unit = {
-    applyForce(steeringForce)
+  def applyPhysics(): Unit = {
+    velocity += acceleration
+    acceleration = Point2D(0, 0)
     velocity = velocity.limit(maxSpeed)
     position = move()
     constrainToBoundaries()

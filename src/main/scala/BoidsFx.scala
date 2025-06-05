@@ -9,16 +9,16 @@ object BoidsFx extends JFXApp3 {
   // config parameters
   val worldWidth: Double = 1200
   val worldHeight: Double = 800
-  val boidsCount: Int = 150
-  val detectionRange: Double = 50
-  val maxForce = 0.2 // max steering force
+  val boidsCount: Int = 100
+  val detectionRange: Double = 40
+  val maxForce = 0.7 // max flocking force
   val maxSpeed: Double = 2.0
   val minSpeed: Double = maxSpeed / 5
-  val cohesionStrength: Double = 0.03
+  val cohesionStrength: Double = 0.02
   val alignmentStrength: Double = 0.08
-  val separationStrength: Double = 0.3
+  val separationStrength: Double = 0.8
   val separationDistance: Double = 20
-  val boundaryMargin: Double = 200
+  val boundaryMargin: Double = 50
   val boundaryForce: Double = 0.06
 
   val flockingBehavior = new FlockingBehavior(
@@ -34,9 +34,10 @@ object BoidsFx extends JFXApp3 {
     // for each boid:
     allBoids.foreach(boid => {
       // calculate the forces
-      val totalForce = flockingBehavior.calculateFlockingForces(boid, allBoids)
+      val force = flockingBehavior.calculateFlockingForces(boid, allBoids)
+      boid.applyForce(force)
       // move the boid
-      boid.applyPhysics(totalForce)
+      boid.applyPhysics()
     })
   }
 
