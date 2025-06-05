@@ -4,6 +4,7 @@ import scalafx.scene.Scene
 import scalafx.scene.paint.Color
 import scalafx.animation.AnimationTimer
 import scalafx.scene.Group
+import scalafx.scene.shape.Circle
 
 object BoidsFx extends JFXApp3 {
   // config parameters
@@ -29,6 +30,8 @@ object BoidsFx extends JFXApp3 {
     worldWidth, worldHeight
   )
   var allBoids: Seq[Boid] = Seq()
+  var detectionCircle: Circle = _
+  var separationCircle: Circle = _
 
   def updateAllBoids(): Unit = {
     // for each boid:
@@ -38,7 +41,18 @@ object BoidsFx extends JFXApp3 {
       boid.applyForce(force)
       // move the boid
       boid.applyPhysics()
+
+
+
     })
+    if (allBoids.nonEmpty) {
+      val firstBoid = allBoids.head
+      detectionCircle.centerX = firstBoid.position.x
+      detectionCircle.centerY = firstBoid.position.y
+
+      separationCircle.centerX = firstBoid.position.x
+      separationCircle.centerY = firstBoid.position.y
+    }
   }
 
   def initializeBoids(rootGroup: Group, boidsCount: Int): Seq[Boid] = {
@@ -54,6 +68,37 @@ object BoidsFx extends JFXApp3 {
 
       Boid(position = Point2D(x, y), velocity = initialVelocity, size=5)
     }
+
+    // visualization circles for boid
+    if (boids.nonEmpty) {
+      val firstBoid = boids.head
+
+      firstBoid.shape.fill = Color.Purple
+
+      detectionCircle = new Circle {
+        centerX = firstBoid.position.x
+        centerY = firstBoid.position.y
+        radius = detectionRange
+        fill = Color.Transparent
+        stroke = Color.LightBlue
+        strokeWidth = 1
+        opacity = 0.6
+      }
+
+      separationCircle = new Circle {
+        centerX = firstBoid.position.x
+        centerY = firstBoid.position.y
+        radius = separationDistance
+        fill = Color.Transparent
+        stroke = Color.Red
+        strokeWidth = 1
+        opacity = 0.6
+      }
+
+      rootGroup.children.add(detectionCircle)
+      rootGroup.children.add(separationCircle)
+    }
+
     rootGroup.children ++= boids.map(_.shape)
     boids
   }
@@ -76,6 +121,8 @@ object BoidsFx extends JFXApp3 {
 
     allBoids = initializeBoids(rootGroup, boidsCount)
 
+    rootGroup.children.add(createLegend())
+
     stage = new PrimaryStage {
       title = "Boids Sim"
       width = worldWidth
@@ -93,4 +140,31 @@ object BoidsFx extends JFXApp3 {
     }
     timer.start()
   }
+}
+
+def createLegend(): Group = {
+  val legend = new Group
+
+  val detectionLegendLine = new scalafx.scene.shape.Line {
+    startX = 10; startY = 20; endX = 30; endY = 20
+    stroke = Color.LightBlue; strokeWidth = 1
+  }
+  val detectionLegendText = new scalafx.scene.text.Text {
+    x = 35; y = 24; text = "Detection Range"
+    fill = Color.LightBlue; font = scalafx.scene.text.Font("Arial", 12)
+  }
+  val separationLegendLine = new scalafx.scene.shape.Line {
+    startX = 10; startY = 40; endX = 30; endY = 40
+    stroke = Color.Red; strokeWidth = 1
+  }
+  val separationLegendText = new scalafx.scene.text.Text {
+    x = 35; y = 44; text = "Separation Distance"
+    fill = Color.Red; font = scalafx.scene.text.Font("Arial", 12)
+  }
+
+  legend.children.addAll(
+    detectionLegendLine, detectionLegendText,
+    separationLegendLine, separationLegendText
+  )
+  legend
 }
