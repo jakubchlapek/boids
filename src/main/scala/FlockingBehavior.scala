@@ -15,6 +15,10 @@ class FlockingBehavior(
                                voxelGrid: Map[VoxelCoord, Seq[Boid]], 
                                neighbors: Seq[Boid], 
                                closeNeighbors:Seq[Boid]): Point2D = {
+    if (neighbors.isEmpty && closeNeighbors.isEmpty) {
+      return Point2D(0, 0)
+    }
+
     val cohesion = if (neighbors.nonEmpty) calculateCohesionForce(boid, neighbors) else Point2D(0, 0)
     val alignment = if (neighbors.nonEmpty) calculateAlignmentForce(boid, neighbors) else Point2D(0, 0)
     val separation = if (closeNeighbors.nonEmpty) calculateSeparationForce(boid, closeNeighbors) else Point2D(0, 0)
@@ -23,21 +27,21 @@ class FlockingBehavior(
   }
 
   /** calculate cohesion force - attraction to center of mass */
-  def calculateCohesionForce(boid: Boid, neighbors: Seq[Boid]): Point2D = {
+  private def calculateCohesionForce(boid: Boid, neighbors: Seq[Boid]): Point2D = {
     val centerOfMass = neighbors.map(_.position).foldLeft(Point2D(0, 0))(_ + _) / neighbors.size.toDouble
     val desiredVector = centerOfMass - boid.position
     desiredVector.limit(maxForce) * cohesionStrength
   }
 
   /** calculate alignment force - match velocity with neighbors */
-  def calculateAlignmentForce(boid: Boid, neighbors: Seq[Boid]): Point2D = {
+  private def calculateAlignmentForce(boid: Boid, neighbors: Seq[Boid]): Point2D = {
     val averageVelocity = neighbors.map(_.velocity).reduce(_ + _) / neighbors.size
     val desiredVector = averageVelocity - boid.velocity
     desiredVector.limit(maxForce) * alignmentStrength
   }
 
   /** calculate separation force - avoid close neighbors */
-  def calculateSeparationForce(boid: Boid, closeNeighbors: Seq[Boid]): Point2D = {
+  private def calculateSeparationForce(boid: Boid, closeNeighbors: Seq[Boid]): Point2D = {
     val repulsionVector = closeNeighbors
       .map { neighbor =>
         val diff = boid.position - neighbor.position

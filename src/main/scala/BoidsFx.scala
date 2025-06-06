@@ -37,7 +37,7 @@ object BoidsFx extends JFXApp3 {
   var detectionCircle: Circle = _
   var separationCircle: Circle = _
 
-  def updateAllBoids(): Unit = {
+  private def updateAllBoids(): Unit = {
     val grid: Map[VoxelCoord, Seq[Boid]] = spatialManager.buildGrid(allBoids)
 
     // for each boid:
@@ -63,7 +63,7 @@ object BoidsFx extends JFXApp3 {
     }
   }
 
-  def initializeBoids(rootGroup: Group, boidsCount: Int): Seq[Boid] = {
+  private def initializeBoids(rootGroup: Group, boidsCount: Int): Seq[Boid] = {
     // initiated at start
     val boids: Seq[Boid] = for (i <- 0 until boidsCount) yield {
       val x: Double = math.random() * worldWidth

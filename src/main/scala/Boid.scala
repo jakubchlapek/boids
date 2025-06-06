@@ -19,7 +19,7 @@ case class Boid(var position: Point2D,
     math.toDegrees(math.atan2(vector.y, vector.x))
 
   /** moves the boid and returns new point */
-  def move(): Point2D =
+  private def move(): Point2D =
     val newPosition = position + velocity
     shape.translateX = newPosition.x
     shape.translateY = newPosition.y
@@ -74,7 +74,7 @@ case class Boid(var position: Point2D,
     updateColorBasedOnSpeed(minSpeed, maxSpeed)
   }
 
-  def updateColorBasedOnSpeed(minSpeed: Double, maxSpeed: Double): Unit = {
+  private def updateColorBasedOnSpeed(minSpeed: Double, maxSpeed: Double): Unit = {
     val speed = velocity.magnitude
 
     // (red for slow, green for medium, blue for fast)

@@ -22,7 +22,7 @@ class SpatialManager(val voxelSize: Double, val detectionRange: Double, val sepa
   def findNeighbors(boid: Boid, voxelGrid: Map[VoxelCoord, Seq[Boid]]): Seq[Boid] = {
     val (voxelX, voxelY) = boid.voxelCoord
   
-    // checcking surrounding cells
+    // checking surrounding cells
     val nearbyBoids = for {
       dx <- -1 to 1
       dy <- -1 to 1
