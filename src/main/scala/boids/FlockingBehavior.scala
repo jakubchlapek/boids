@@ -1,15 +1,10 @@
 package boids
 
 class FlockingBehavior(
-                        var maxSpeed: Double,
                         var maxForce: Double,
-                        var detectionRange: Double,
                         var cohesionStrength: Double,
                         var alignmentStrength: Double,
                         var separationStrength: Double,
-                        var separationRange: Double,
-                        var worldWidth: Double,
-                        var worldHeight: Double,
                         var cursorInfluenceRange: Double,
                         var cursorInfluenceStrength: Double = 100
                       ) {
@@ -101,32 +96,4 @@ class FlockingBehavior(
       }
     }.getOrElse(Point2D(0, 0))
   }
-
-  // previous approach
-  //  /** calculate force repelling from the borders */
-  //  def calculateBoundaryForce(position: Point2D, velocity: Point2D): Point2D = {
-  //    var force = Point2D(0, 0)
-  //
-  //    for (dim <- 0 to 1) {
-  //      val pos = if (dim == 0) position.x else position.y
-  //      val vel = if (dim == 0) velocity.x else velocity.y
-  //      val size = if (dim == 0) worldWidth else worldHeight
-  //
-  //      if (pos < boundaryMargin) {
-  //        val distFactor = 1 - pos / boundaryMargin
-  //        val velFactor = if (vel < 0) math.abs(vel) / maxSpeed * 0.5 else 0
-  //        val dir = if (dim == 0) Point2D(1, 0) else Point2D(0, 1)
-  //        force += dir * (distFactor + velFactor)
-  //      }
-  //      else if (pos > size - boundaryMargin) {
-  //        val distFactor = 1 - (size - pos) / boundaryMargin
-  //        val velFactor = if (vel > 0) math.abs(vel) / maxSpeed * 0.5 else 0
-  //        val dir = if (dim == 0) Point2D(-1, 0) else Point2D(0, -1)
-  //        force += dir * (distFactor + velFactor)
-  //      }
-  //    }
-  //
-  //    force * boundaryForce
-  //  }
-  //}
 }

@@ -23,15 +23,16 @@ class CoreSimulator(
     dragVector = vec
   }
 
-  private val flockingBehavior = new FlockingBehavior(
-    maxSpeed, maxForce, detectionRange,
-    cohesionStrength, alignmentStrength,
-    separationStrength, separationRange,
-    worldWidth, worldHeight,
-    cursorInfluenceRange, cursorInfluenceStrength
+  private val flockingBehavior: FlockingBehavior = new FlockingBehavior(
+    maxForce = maxForce,
+    cohesionStrength = cohesionStrength,
+    alignmentStrength = alignmentStrength,
+    separationStrength = separationStrength,
+    cursorInfluenceRange = cursorInfluenceRange,
+    cursorInfluenceStrength = cursorInfluenceStrength
   )
 
-  private val spatialManager = new SpatialManager(
+  private val spatialManager: SpatialManager = new SpatialManager(
     voxelSize = detectionRange,
     detectionRange = detectionRange,
     separationRange = separationRange,
@@ -64,15 +65,17 @@ class CoreSimulator(
   }
 
   def updateSettings(): Unit = {
-    flockingBehavior.maxSpeed = maxSpeed
-    flockingBehavior.maxForce = maxForce
-    flockingBehavior.detectionRange = detectionRange
     flockingBehavior.cohesionStrength = cohesionStrength
     flockingBehavior.alignmentStrength = alignmentStrength
     flockingBehavior.separationStrength = separationStrength
-    flockingBehavior.separationRange = separationRange
     flockingBehavior.cursorInfluenceRange = cursorInfluenceRange
     flockingBehavior.cursorInfluenceStrength = cursorInfluenceStrength
+    spatialManager.voxelSize = detectionRange
+    spatialManager.detectionRange = detectionRange
+    spatialManager.separationRange = separationRange
+    spatialManager.worldWidth = worldWidth
+    spatialManager.worldHeight = worldHeight
+    spatialManager.updateRanges()
   }
 
   def update(changeMade: Boolean): Unit = {

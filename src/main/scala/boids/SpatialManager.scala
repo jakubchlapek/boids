@@ -5,15 +5,20 @@ type VoxelCoord = (Int, Int)
 // voxel === grid cell
 // recommended for voxelSize to be equal to or greater than detectionRange
 class SpatialManager(
-                      val voxelSize: Double, 
-                      val detectionRange: Double, 
-                      val separationRange: Double,
+                      var voxelSize: Double,
+                      var detectionRange: Double,
+                      var separationRange: Double,
                       var worldWidth: Double,
                       var worldHeight: Double
                     ):
-  private val detectionRangeSquared: Double = detectionRange * detectionRange
-  private val separationRangeSquared: Double = separationRange * separationRange
-  
+  private var detectionRangeSquared: Double = detectionRange * detectionRange
+  private var separationRangeSquared: Double = separationRange * separationRange
+
+  def updateRanges(): Unit = {
+    detectionRangeSquared = detectionRange * detectionRange
+    separationRangeSquared = separationRange * separationRange
+  }
+
   /** group boids by voxelCoord*/
   def buildGrid(boids: Seq[Boid]): Map[VoxelCoord, Seq[Boid]] = {
     boids.groupBy(_.voxelCoord)
