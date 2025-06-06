@@ -1,6 +1,6 @@
 package boids.ui
 
-import boids.UIComponents.*
+import boids.ui.UIComponents.*
 import boids.core.CoreSimulator
 import boids.physics.Point2D
 import scalafx.Includes.jfxMouseEvent2sfx

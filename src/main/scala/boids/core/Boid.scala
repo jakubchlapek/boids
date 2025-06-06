@@ -1,14 +1,13 @@
 package boids.core
 
-import boids.Boid
-import boids.physics.Point2D
+import boids.physics.{Point2D, VoxelCoord}
 
 class Boid(var position: Point2D,
                 var velocity: Point2D,
                 var voxelCoord: VoxelCoord,
                 var acceleration: Point2D = Point2D(0, 0),
                 val speedMultiplier: Double = 1.0
-          ) extends SimulationEntity:
+          ) extends BaseEntity:
 
   def applyForce(force: Point2D): Unit =
     acceleration += force

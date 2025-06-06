@@ -1,8 +1,8 @@
 package boids.core
 
 import boids.core.Boid
-import boids.Predator
-import boids.physics.Point2D
+import boids.core.Predator
+import boids.physics.{Point2D, VoxelCoord}
 
 class Predator(
                 position: Point2D,
