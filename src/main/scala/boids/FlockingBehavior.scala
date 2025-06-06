@@ -9,23 +9,35 @@ class FlockingBehavior(
                         val separationStrength: Double,
                         val separationRange: Double,
                         val worldWidth: Double,
-                        val worldHeight: Double
+                        val worldHeight: Double,
+                        val cursorInfluenceRange: Double,
+                        val cursorInfluenceStrength: Double = 100
                       ) {
   
   /** calculate all flocking forces for a boid and return the combined steering force */
   def calculateFlockingForces( boid: Boid, 
                                voxelGrid: Map[VoxelCoord, Seq[Boid]], 
                                neighbors: Seq[Boid], 
-                               closeNeighbors:Seq[Boid]): Point2D = {
+                               closeNeighbors: Seq[Boid],
+                               cursorPosition: Option[Point2D] = None,
+                               leftMousePressed: Boolean = false,
+                               rightMousePressed: Boolean = false,
+                               dragVector: Point2D = Point2D(0, 0)
+                             ): Point2D = {
     if (neighbors.isEmpty && closeNeighbors.isEmpty) {
       return Point2D(0, 0)
     }
 
-    val cohesion = if (neighbors.nonEmpty) calculateCohesionForce(boid, neighbors) else Point2D(0, 0)
-    val alignment = if (neighbors.nonEmpty) calculateAlignmentForce(boid, neighbors) else Point2D(0, 0)
-    val separation = if (closeNeighbors.nonEmpty) calculateSeparationForce(boid, closeNeighbors) else Point2D(0, 0)
+    val cohesion = if (neighbors.nonEmpty)
+      calculateCohesionForce(boid, neighbors) else Point2D(0, 0)
+    val alignment = if (neighbors.nonEmpty)
+      calculateAlignmentForce(boid, neighbors) else Point2D(0, 0)
+    val separation = if (closeNeighbors.nonEmpty)
+      calculateSeparationForce(boid, closeNeighbors) else Point2D(0, 0)
+    val cursor = if (leftMousePressed || rightMousePressed)
+      calculateCursorForce(boid, cursorPosition, leftMousePressed, rightMousePressed, dragVector) else Point2D(0, 0)
 
-    cohesion + alignment + separation
+    cohesion + alignment + separation + cursor
   }
 
   /** calculate cohesion force - attraction to center of mass */
@@ -55,6 +67,41 @@ class FlockingBehavior(
 
     repulsionVector.limit(maxForce) * separationStrength
   }
+
+  private def calculateCursorForce(
+                                    boid: Boid,
+                                    cursorPosition: Option[Point2D],
+                                    leftPressed: Boolean,
+                                    rightPressed: Boolean,
+                                    dragVector: Point2D
+                                  ): Point2D = {
+    cursorPosition.flatMap { pos =>
+      val toCursor = boid.position - pos
+      val distance = toCursor.magnitude
+
+      if (distance < cursorInfluenceRange) {
+        val influence = 1.0 - (distance / cursorInfluenceRange)
+
+        if (rightPressed) {
+          // repel away from cursor
+          val repelDirection = toCursor.normalize()
+          val force = repelDirection * cursorInfluenceStrength * influence
+          Some(force)
+
+        } else if (leftPressed) {
+          // push based on drag
+          val scaledDrag = dragVector * (cursorInfluenceStrength * influence)
+          Some(scaledDrag)
+
+        } else {
+          Some(Point2D(0, 0))
+        }
+      } else {
+        Some(Point2D(0, 0))
+      }
+    }.getOrElse(Point2D(0, 0))
+  }
+
   // previous approach
   //  /** calculate force repelling from the borders */
   //  def calculateBoundaryForce(position: Point2D, velocity: Point2D): Point2D = {

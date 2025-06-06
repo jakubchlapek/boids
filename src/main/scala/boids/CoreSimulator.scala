@@ -12,14 +12,23 @@ class CoreSimulator(
                      val cohesionStrength: Double,
                      val alignmentStrength: Double,
                      val separationStrength: Double,
-                     val separationRange: Double
+                     val separationRange: Double,
+                     val cursorInfluenceRange: Double,
+                     val cursorInfluenceStrength: Double
                    ) {
+  private var cursorState = CursorState(None, false, false)
+  private var dragVector: Point2D = Point2D(0, 0)
+
+  def setDragVector(vec: Point2D): Unit = {
+    dragVector = vec
+  }
 
   private val flockingBehavior = new FlockingBehavior(
     maxSpeed, maxForce, detectionRange,
     cohesionStrength, alignmentStrength,
     separationStrength, separationRange,
-    worldWidth, worldHeight
+    worldWidth, worldHeight,
+    cursorInfluenceRange, cursorInfluenceStrength
   )
 
   private val spatialManager = new SpatialManager(
@@ -46,6 +55,12 @@ class CoreSimulator(
     }
   }
 
+  def updateCursorState(position: Option[Point2D],
+                        leftPressed: Boolean,
+                        rightPressed: Boolean): Unit = {
+    cursorState = CursorState(position, leftPressed, rightPressed)
+  }
+
   def update(): Unit = {
     val grid = spatialManager.buildGrid(allBoids)
 
@@ -53,7 +68,10 @@ class CoreSimulator(
       val neighbors = spatialManager.findNeighbors(boid, grid)
       val closeNeighbors = spatialManager.findCloseNeighbors(boid, neighbors)
 
-      val force = flockingBehavior.calculateFlockingForces(boid, grid, neighbors, closeNeighbors)
+      val force = flockingBehavior.calculateFlockingForces(
+        boid, grid, neighbors, closeNeighbors,
+        cursorState.position, cursorState.leftPressed, cursorState.rightPressed, dragVector
+      )
       boid.applyForce(force)
       boid.applyPhysics()
     }

@@ -8,7 +8,8 @@ case class Point2D(x: Double, y: Double):
     
   def -(other: Point2D): Point2D =
     Point2D(x - other.x, y - other.y)
-    
+  def unary_- : Point2D = Point2D(-x, -y)
+
   def *(scalar: Double): Point2D =
     Point2D(x * scalar, y * scalar)
   def *(other: Point2D): Point2D =
@@ -17,7 +18,7 @@ case class Point2D(x: Double, y: Double):
   def /(scalar: Double): Point2D = 
     require(scalar != 0, "Division by zero")
     Point2D(x / scalar, y / scalar)
-
+  
   def normalize(): Point2D =
     if (magnitude > 0) this / magnitude else this
 

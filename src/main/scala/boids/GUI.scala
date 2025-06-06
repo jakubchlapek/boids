@@ -7,6 +7,11 @@ import scalafx.scene.paint.Color
 import scalafx.animation.AnimationTimer
 import scalafx.scene.Group
 import scalafx.scene.canvas.Canvas
+import scalafx.scene.Cursor
+import scalafx.Includes.jfxMouseEvent2sfx
+import scalafx.scene.input.InputIncludes.jfxMouseEvent2sfx
+import scalafx.scene.input.MouseEvent
+import scalafx.scene.input.MouseButton
 
 object GUI extends JFXApp3 {
   val worldWidth: Double = 1200.0
@@ -21,18 +26,44 @@ object GUI extends JFXApp3 {
   val alignmentStrength: Double = 0.02
   val separationStrength: Double = 0.8
   val separationRange: Double = 10.0
+  val cursorInfluenceRange: Double = 75.0
+  val cursorInfluenceStrength: Double = 0.15
+
+  private var leftMousePressed: Boolean = false
+  private var rightMousePressed: Boolean = false
+  private var lastCursorPosition: Option[Point2D] = None
+  private var cursorPosition: Option[Point2D] = None
 
   private val simulation = new CoreSimulator(
     worldWidth, worldHeight, boidsCount, boidSize,
     detectionRange, maxForce, maxSpeed, minSpeed,
     cohesionStrength, alignmentStrength,
-    separationStrength, separationRange
+    separationStrength, separationRange,
+    cursorInfluenceRange, cursorInfluenceStrength
   )
 
   override def start(): Unit = {
     val rootGroup = new Group()
     val canvas = new Canvas(worldWidth, worldHeight)
     val gc = canvas.graphicsContext2D
+
+    canvas.onMouseMoved = (e) => updateDragVector(Point2D(e.x, e.y))
+    canvas.onMouseDragged = (e) => updateDragVector(Point2D(e.x, e.y))
+
+    canvas.onMouseExited = _ =>
+      cursorPosition = None
+
+    canvas.onMousePressed = (e) =>
+      e.button match
+        case MouseButton.Primary => leftMousePressed = true
+        case MouseButton.Secondary => rightMousePressed = true
+        case _ =>
+    canvas.onMouseReleased = (e) =>
+      e.button match
+        case MouseButton.Primary => leftMousePressed = false
+        case MouseButton.Secondary => rightMousePressed = false
+        case _ =>
+
     rootGroup.children.add(canvas)
     rootGroup.children.add(createLegend())
 
@@ -47,10 +78,22 @@ object GUI extends JFXApp3 {
     }
 
     val timer = AnimationTimer { _ =>
+      simulation.updateCursorState(cursorPosition, leftMousePressed, rightMousePressed)
       simulation.update()
       renderBoids(gc)
     }
     timer.start()
+  }
+
+  private def updateDragVector(newPos: Point2D): Unit = {
+    lastCursorPosition match
+      case Some(last) if leftMousePressed || rightMousePressed =>
+        val dragVector = newPos - last
+        simulation.setDragVector(dragVector)
+      case _ =>
+        simulation.setDragVector(Point2D(0, 0))
+    cursorPosition = Some(newPos)
+    lastCursorPosition = Some(newPos)
   }
 
   private def renderBoids(gc: scalafx.scene.canvas.GraphicsContext): Unit = {
