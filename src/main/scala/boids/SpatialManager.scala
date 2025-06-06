@@ -1,4 +1,4 @@
-import BoidsFx.{detectionRange, separationRange}
+package boids
 
 type VoxelCoord = (Int, Int)
 

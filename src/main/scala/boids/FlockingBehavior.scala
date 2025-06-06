@@ -1,3 +1,5 @@
+package boids
+
 class FlockingBehavior(
                         val maxSpeed: Double,
                         val maxForce: Double,

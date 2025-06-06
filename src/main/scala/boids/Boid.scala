@@ -1,6 +1,6 @@
-import BoidsFx.{maxSpeed, minSpeed, worldHeight, worldWidth}
-import scalafx.scene.paint.Color
-import scalafx.scene.shape.Polygon
+package boids
+
+import boids.GUI.{maxSpeed, worldHeight, worldWidth}
 
 case class Boid(var position: Point2D,
                 var velocity: Point2D,

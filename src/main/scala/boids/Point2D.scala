@@ -1,3 +1,5 @@
+package boids
+
 case class Point2D(x: Double, y: Double):
   val magnitude: Double = math.sqrt(math.pow(x, 2) + math.pow(y, 2))
   
@@ -22,7 +24,7 @@ case class Point2D(x: Double, y: Double):
 
   def dot(other: Point2D): Double =
     x * other.x + y * other.y
-  
+
   def distance(other: Point2D): Double =
     math.sqrt(math.pow(x - other.x, 2) + math.pow(y - other.y, 2))
 
