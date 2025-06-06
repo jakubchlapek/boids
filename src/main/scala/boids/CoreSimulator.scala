@@ -14,7 +14,11 @@ class CoreSimulator(
                      var separationStrength: Double,
                      var separationRange: Double,
                      var cursorInfluenceRange: Double,
-                     var cursorInfluenceStrength: Double
+                     var cursorInfluenceStrength: Double,
+                     var predatorCount: Int = 2,
+                     var predatorHuntingRange: Double = 150,
+                     var predatorSpeedMultiplier: Double = 1.5,
+                     var panicSpeedMultiplier: Double = 1.5,
                    ) {
   private var cursorState = CursorState(None, false, false)
   private var dragVector: Point2D = Point2D(0, 0)
@@ -32,6 +36,8 @@ class CoreSimulator(
     cursorInfluenceStrength = cursorInfluenceStrength
   )
 
+  private val predatorBehavior: PredatorBehavior = new PredatorBehavior()
+
   private val spatialManager: SpatialManager = new SpatialManager(
     voxelSize = detectionRange,
     detectionRange = detectionRange,
@@ -41,6 +47,7 @@ class CoreSimulator(
   )
 
   var allBoids: Seq[Boid] = initializeBoids()
+  var allPredators: Seq[Predator] = initializePredators()
 
   private def initializeBoids(): Seq[Boid] = {
     for (i <- 0 until boidsCount) yield {
@@ -58,6 +65,24 @@ class CoreSimulator(
     }
   }
 
+  private def initializePredators(): Seq[Predator] = {
+    for (i <- 0 until predatorCount) yield {
+      val x = math.random() * worldWidth
+      val y = math.random() * worldHeight
+      val velX = (math.random() * 2 - 1) * (maxSpeed / 2)
+      val velY = (math.random() * 2 - 1) * (maxSpeed / 2)
+      val initialVelocity = Point2D(velX, velY)
+
+      Predator(
+        position = Point2D(x, y),
+        velocity = initialVelocity,
+        voxelCoord = spatialManager.getVoxelCoord(Point2D(x, y)),
+        huntingRange = predatorHuntingRange,
+        speedMultiplier = predatorSpeedMultiplier
+      )
+    }
+  }
+
   def updateCursorState(position: Option[Point2D],
                         leftPressed: Boolean,
                         rightPressed: Boolean): Unit = {
@@ -71,12 +96,14 @@ class CoreSimulator(
     flockingBehavior.separationStrength = separationStrength
     flockingBehavior.cursorInfluenceRange = cursorInfluenceRange
     flockingBehavior.cursorInfluenceStrength = cursorInfluenceStrength
+    flockingBehavior.panicSpeedMultiplier = panicSpeedMultiplier
     spatialManager.voxelSize = detectionRange
     spatialManager.detectionRange = detectionRange
     spatialManager.separationRange = separationRange
     spatialManager.worldWidth = worldWidth
     spatialManager.worldHeight = worldHeight
     spatialManager.updateRanges()
+    predatorBehavior.maxForce = maxForce
   }
 
   def update(changeMade: Boolean): Unit = {
@@ -89,13 +116,26 @@ class CoreSimulator(
       val neighbors = spatialManager.findNeighbors(boid, grid)
       val closeNeighbors = spatialManager.findCloseNeighbors(boid, neighbors)
 
-      val force = flockingBehavior.calculateFlockingForces(
-        boid, grid, neighbors, closeNeighbors,
+      val (force, isPanicking) = flockingBehavior.calculateFlockingForces(
+        boid, grid, neighbors, closeNeighbors, allPredators,
         cursorState.position, cursorState.leftPressed, cursorState.rightPressed, dragVector
       )
       boid.applyForce(force)
-      boid.applyPhysics(maxSpeed, minSpeed)
+
+      if (!isPanicking)
+        boid.applyPhysics(maxSpeed, minSpeed)
+      else
+        boid.applyPhysics(maxSpeed * flockingBehavior.panicSpeedMultiplier, minSpeed)
+
       spatialManager.updateBoidPosition(boid)
     }
+
+    allPredators.foreach { predator =>
+      val predatorForce = predatorBehavior.calculatePredatorForces(predator, allBoids)
+      predator.applyForce(predatorForce)
+      predator.applyPhysics(maxSpeed, minSpeed)
+      spatialManager.updateBoidPosition(predator)
+    }
+
   }
 }

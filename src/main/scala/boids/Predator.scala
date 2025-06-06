@@ -1,0 +1,36 @@
+package boids
+
+class Predator(
+                position: Point2D,
+                velocity: Point2D,
+                voxelCoord: VoxelCoord,
+                acceleration: Point2D = Point2D(0, 0),
+                val huntingRange: Double = 50,  // range for targeting boids
+                speedMultiplier: Double = 1.5  // predators move faster
+              ) extends Boid(position, velocity, voxelCoord, acceleration, speedMultiplier):
+
+  def findTarget(boids: Seq[Boid]): Option[Boid] = {
+    if (boids.isEmpty) return None
+
+    val boidsInRange = boids.filter(b =>
+      b.position.distanceSquared(position) < huntingRange * huntingRange
+    )
+
+    if (boidsInRange.isEmpty) return None
+
+    // return the closest boid
+    Some(boidsInRange.minBy(b => b.position.distanceSquared(position)))
+  }
+
+object Predator {
+  def apply(
+             position: Point2D,
+             velocity: Point2D,
+             voxelCoord: VoxelCoord,
+             acceleration: Point2D = Point2D(0, 0),
+             huntingRange: Double = 50,
+             speedMultiplier: Double = 1.5
+           ): Predator = new Predator(
+    position, velocity, voxelCoord, acceleration, huntingRange, speedMultiplier
+  )
+}

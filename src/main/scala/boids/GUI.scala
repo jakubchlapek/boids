@@ -18,7 +18,7 @@ object GUI extends JFXApp3 {
   private val initialWorldWidth: Double = 1200.0
   private val initialWorldHeight: Double = 800.0
 
-  private var boidsCount: Int                 = 500
+  private var boidsCount: Int                 = 1000
   private var boidSize: Double                = 7.0
   private var detectionRange: Double          = 30.0
   private var maxForce: Double                = 0.7
@@ -261,11 +261,29 @@ object GUI extends JFXApp3 {
       val size = boidSize
       val baseWidth = size / 2
 
-      val tip      = boid.position + dir * size
+      val tip = boid.position + dir * size
       val baseLeft = boid.position - dir * (size * 0.3) + perp * baseWidth
       val baseRight = boid.position - dir * (size * 0.3) - perp * baseWidth
 
       gc.setFill(getColorBySpeed(boid.velocity.magnitude))
+      gc.fillPolygon(
+        Array(tip.x, baseLeft.x, baseRight.x),
+        Array(tip.y, baseLeft.y, baseRight.y),
+        3
+      )
+    }
+    
+    gc.fill = Color.Red
+    simulation.allPredators.foreach { predator =>
+      val size = boidSize * 1.5 
+      val dir = predator.velocity.normalize()
+      val perp = Point2D(-dir.y, dir.x)
+      val baseWidth = size / 2
+
+      val tip = predator.position + dir * size
+      val baseLeft = predator.position - dir * (size * 0.3) + perp * baseWidth
+      val baseRight = predator.position - dir * (size * 0.3) - perp * baseWidth
+
       gc.fillPolygon(
         Array(tip.x, baseLeft.x, baseRight.x),
         Array(tip.y, baseLeft.y, baseRight.y),
