@@ -60,6 +60,67 @@ object GUI extends JFXApp3 {
         case _                     =>
       }
 
+    val settingPanes: Seq[TitledPane] = getSettingPanes
+    val rightSidebar = new VBox(10) {
+      padding = Insets(10)
+      children = settingPanes
+      minWidth = 200
+      maxWidth = 250
+    }
+
+    val rootPane = new BorderPane {
+      center = canvas
+      right  = rightSidebar
+    }
+
+    stage = new PrimaryStage {
+      title = "Boids Simulation with Sliders"
+      maximized = true
+      scene = new Scene {
+        fill = Color.Black
+        content = rootPane
+      }
+    }
+
+    canvas.width  <= rootPane.width - rightSidebar.minWidth.value
+    canvas.height <= rootPane.height
+    simulation = new CoreSimulator(
+      canvas.width.value,
+      canvas.height.value,
+      boidsCount,
+      boidSize,
+      detectionRange,
+      maxForce,
+      maxSpeed,
+      minSpeed,
+      cohesionStrength,
+      alignmentStrength,
+      separationStrength,
+      separationRange,
+      cursorInfluenceRange,
+      cursorInfluenceStrength
+    )
+
+    rootPane.width.onChange { (_, _, newWidth) =>
+      val availableWidth = newWidth.doubleValue() - rightSidebar.minWidth.value
+      simulation.worldWidth = availableWidth
+      changeMade = true
+    }
+    rootPane.height.onChange { (_, _, newHeight) =>
+      simulation.worldHeight = newHeight.doubleValue()
+      changeMade = true
+    }
+
+    val timer = AnimationTimer { _ =>
+      simulation.updateCursorState(cursorPosition, leftMousePressed, rightMousePressed)
+      simulation.update(changeMade)
+      changeMade = false
+      renderBoids(gc)
+    }
+    timer.start()
+  }
+
+  private def getSettingPanes: Seq[TitledPane] = {
     // cohesion
     val cohesionPane = createParameterControl(
       "Cohesion Strength",
@@ -113,61 +174,12 @@ object GUI extends JFXApp3 {
       }
     )
 
-    val rightSidebar = new VBox(10) {
-      padding = Insets(10)
-      children = Seq(cohesionPane, alignmentPane, separationPane, speedPane)
-      minWidth = 200
-      maxWidth = 250
-    }
-
-    val rootPane = new BorderPane {
-      center = canvas
-      right  = rightSidebar
-    }
-
-    stage = new PrimaryStage {
-      title = "Boids Simulation with Sliders"
-      maximized = true
-      scene = new Scene {
-        fill = Color.Black
-        content = rootPane
-      }
-    }
-
-    canvas.width  <= rootPane.width - rightSidebar.minWidth.value
-    canvas.height <= rootPane.height
-    simulation = new CoreSimulator(
-      canvas.width.value,
-      canvas.height.value,
-      boidsCount,
-      boidSize,
-      detectionRange,
-      maxForce,
-      maxSpeed,
-      minSpeed,
-      cohesionStrength,
-      alignmentStrength,
-      separationStrength,
-      separationRange,
-      cursorInfluenceRange,
-      cursorInfluenceStrength
+    Seq(
+      cohesionPane,
+      alignmentPane,
+      separationPane,
+      speedPane
     )
-
-    rootPane.width.onChange { (_, _, newWidth) =>
-      val availableWidth = newWidth.doubleValue() - rightSidebar.minWidth.value
-      simulation.worldWidth = availableWidth
-    }
-    rootPane.height.onChange { (_, _, newHeight) =>
-      simulation.worldHeight = newHeight.doubleValue()
-    }
-
-    val timer = AnimationTimer { _ =>
-      simulation.updateCursorState(cursorPosition, leftMousePressed, rightMousePressed)
-      simulation.update(changeMade)
-      changeMade = false
-      renderBoids(gc)
-    }
-    timer.start()
   }
 
   private def updateDragVector(newPos: Point2D): Unit = {

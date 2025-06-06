@@ -4,13 +4,18 @@ type VoxelCoord = (Int, Int)
 
 // voxel === grid cell
 // recommended for voxelSize to be equal to or greater than detectionRange
-class SpatialManager(val voxelSize: Double, val detectionRange: Double, val separationRange: Double):
+class SpatialManager(
+                      val voxelSize: Double, 
+                      val detectionRange: Double, 
+                      val separationRange: Double,
+                      var worldWidth: Double,
+                      var worldHeight: Double
+                    ):
   private val detectionRangeSquared: Double = detectionRange * detectionRange
   private val separationRangeSquared: Double = separationRange * separationRange
   
-  /** update each boids voxelCoord, group them by voxelCoord*/
+  /** group boids by voxelCoord*/
   def buildGrid(boids: Seq[Boid]): Map[VoxelCoord, Seq[Boid]] = {
-    boids.foreach(boid => boid.voxelCoord = getVoxelCoord(boid.position))
     boids.groupBy(_.voxelCoord)
   }
   
@@ -40,3 +45,37 @@ class SpatialManager(val voxelSize: Double, val detectionRange: Double, val sepa
       neighbor => neighbor.position.distanceSquared(boid.position) < separationRangeSquared
     )
   }
+
+  /** Moves a boid based on its velocity */
+  def moveBoid(boid: Boid): Unit =
+    val newPosition = boid.position + boid.velocity
+    boid.position = newPosition
+
+    // after moving, check if the boid's voxel coordinate has changed
+    val newVoxelCoord = getVoxelCoord(boid.position)
+    if (newVoxelCoord != boid.voxelCoord)
+      boid.voxelCoord = newVoxelCoord
+
+  /** Constrains boids to world boundaries using wrap-around behavior */
+  def constrainToBoundaries(boid: Boid): Unit =
+    var newX = boid.position.x
+    var newY = boid.position.y
+
+    // x axis
+    if (boid.position.x < 0) newX = worldWidth
+    else if (boid.position.x > worldWidth) newX = 0
+
+    // y axis
+    if (boid.position.y < 0) newY = worldHeight
+    else if (boid.position.y > worldHeight) newY = 0
+
+    // if moved
+    if (newX != boid.position.x || newY != boid.position.y)
+      boid.position = Point2D(newX, newY)
+      // update voxel coordinate when position changes due to boundary wrapping
+      boid.voxelCoord = getVoxelCoord(boid.position)
+
+  /** combined movement and boundary checking in one operation */
+  def updateBoidPosition(boid: Boid): Unit =
+    moveBoid(boid)
+    constrainToBoundaries(boid)

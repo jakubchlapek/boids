@@ -34,7 +34,9 @@ class CoreSimulator(
   private val spatialManager = new SpatialManager(
     voxelSize = detectionRange,
     detectionRange = detectionRange,
-    separationRange = separationRange
+    separationRange = separationRange,
+    worldWidth = worldWidth,
+    worldHeight = worldHeight
   )
 
   var allBoids: Seq[Boid] = initializeBoids()
@@ -76,6 +78,7 @@ class CoreSimulator(
   def update(changeMade: Boolean): Unit = {
     if (changeMade)
       updateSettings()
+
     val grid = spatialManager.buildGrid(allBoids)
 
     allBoids.foreach { boid =>
@@ -87,7 +90,8 @@ class CoreSimulator(
         cursorState.position, cursorState.leftPressed, cursorState.rightPressed, dragVector
       )
       boid.applyForce(force)
-      boid.applyPhysics(maxSpeed, worldWidth, worldHeight)
+      boid.applyPhysics(maxSpeed)
+      spatialManager.updateBoidPosition(boid)
     }
   }
 }
