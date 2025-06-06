@@ -10,7 +10,12 @@ case class Boid(var position: Point2D,
   def applyForce(force: Point2D): Unit =
     acceleration += force
 
-  def applyPhysics(maxSpeed: Double): Unit =
+  def applyPhysics(maxSpeed: Double, minSpeed: Double): Unit =
     velocity += acceleration
     acceleration = Point2D(0, 0)
     velocity = velocity.limit(maxSpeed)
+    
+    val speed = velocity.magnitude
+    if (speed < minSpeed && speed > 0.0001) {
+      velocity = velocity.normalize() * minSpeed
+    }

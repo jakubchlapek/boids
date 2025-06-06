@@ -65,6 +65,7 @@ class CoreSimulator(
   }
 
   def updateSettings(): Unit = {
+    flockingBehavior.maxForce = maxForce
     flockingBehavior.cohesionStrength = cohesionStrength
     flockingBehavior.alignmentStrength = alignmentStrength
     flockingBehavior.separationStrength = separationStrength
@@ -93,7 +94,7 @@ class CoreSimulator(
         cursorState.position, cursorState.leftPressed, cursorState.rightPressed, dragVector
       )
       boid.applyForce(force)
-      boid.applyPhysics(maxSpeed)
+      boid.applyPhysics(maxSpeed, minSpeed)
       spatialManager.updateBoidPosition(boid)
     }
   }

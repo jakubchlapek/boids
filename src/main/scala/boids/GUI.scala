@@ -22,7 +22,7 @@ object GUI extends JFXApp3 {
   private var boidSize: Double                = 7.0
   private var detectionRange: Double          = 30.0
   private var maxForce: Double                = 0.7
-  private var maxSpeed: Double                = 2.0
+  private var maxSpeed: Double                = 1.2
   private var minSpeed: Double                = maxSpeed / 5
   private var cohesionStrength: Double        = 0.01
   private var alignmentStrength: Double       = 0.02
