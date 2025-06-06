@@ -1,7 +1,7 @@
 package boids
 
 case class Point2D(x: Double, y: Double):
-  val magnitude: Double = math.sqrt(math.pow(x, 2) + math.pow(y, 2))
+  lazy val magnitude: Double = math.sqrt(math.pow(x, 2) + math.pow(y, 2))
   
   def +(other: Point2D): Point2D = 
     Point2D(x + other.x, y + other.y)

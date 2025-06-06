@@ -64,7 +64,7 @@ object GUI extends JFXApp3 {
       val baseLeft = boid.position - dir * (size * 0.3) + perp * baseWidth
       val baseRight = boid.position - dir * (size * 0.3) - perp * baseWidth
 
-      gc.setFill(Color.White)
+      gc.setFill(getColorBySpeed(speed = boid.velocity.magnitude))
       gc.fillPolygon(
         Array(tip.x, baseLeft.x, baseRight.x),
         Array(tip.y, baseLeft.y, baseRight.y),
@@ -97,6 +97,21 @@ object GUI extends JFXApp3 {
       )
     }
   }
+
+  private def getColorBySpeed(speed: Double): Color = {
+    val normalizedSpeed = (speed - minSpeed) / (maxSpeed - minSpeed)
+    val clampedSpeed = math.min(math.max(0.0, normalizedSpeed), 1.0)
+
+    if (clampedSpeed < 0.5) {
+      val t = clampedSpeed * 2
+      Color(1.0, 1.0 - t, 1.0 - t, 1.0)
+
+    } else {
+      val t = (clampedSpeed - 0.5) * 2
+      Color(t, t, 1.0, 1.0)
+    }
+  }
+
 
   private def createLegend(): Group = {
     val legend = new Group
