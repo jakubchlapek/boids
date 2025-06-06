@@ -76,14 +76,14 @@ object GUI extends JFXApp3 {
     stage = new PrimaryStage {
       title = "Boids Simulation with Sliders"
       maximized = true
+      minWidth = 550
+      minHeight = 400
       scene = new Scene {
         fill = Color.Black
         content = rootPane
       }
     }
 
-    canvas.width  <= rootPane.width - rightSidebar.minWidth.value
-    canvas.height <= rootPane.height
     simulation = new CoreSimulator(
       canvas.width.value,
       canvas.height.value,
@@ -101,14 +101,43 @@ object GUI extends JFXApp3 {
       cursorInfluenceStrength
     )
 
-    rootPane.width.onChange { (_, _, newWidth) =>
-      val availableWidth = newWidth.doubleValue() - rightSidebar.minWidth.value
+    def updateCanvasSize(): Unit = {
+      val sceneWidth = stage.width.value
+      val sceneHeight = stage.height.value
+      val sidebarWidth = rightSidebar.minWidth.value
+
+      val minCanvasWidth = 300.0
+      val requiredWidth = sidebarWidth + minCanvasWidth
+
+      val availableWidth = if (sceneWidth >= requiredWidth) {
+        sceneWidth - sidebarWidth
+      } else {
+        minCanvasWidth
+      }
+      val availableHeight = math.max(200, sceneHeight)
+
+      // update canvas (boid space) size
+      canvas.width = availableWidth
+      canvas.height = availableHeight
+
+      // update simulation world dimensions
       simulation.worldWidth = availableWidth
+      simulation.worldHeight = availableHeight
       changeMade = true
     }
-    rootPane.height.onChange { (_, _, newHeight) =>
-      simulation.worldHeight = newHeight.doubleValue()
-      changeMade = true
+
+    stage.widthProperty.addListener((obs, oldVal, newVal) => {
+      updateCanvasSize()
+    })
+
+    stage.heightProperty.addListener((obs, oldVal, newVal) => {
+      updateCanvasSize()
+    })
+
+    stage.onShown = _ => {
+      javafx.application.Platform.runLater { () =>
+        updateCanvasSize()
+      }
     }
 
     val timer = AnimationTimer { _ =>
@@ -119,6 +148,7 @@ object GUI extends JFXApp3 {
     }
     timer.start()
   }
+
 
   private def getSettingPanes: Seq[TitledPane] = {
     // cohesion
