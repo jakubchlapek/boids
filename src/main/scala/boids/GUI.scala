@@ -4,106 +4,198 @@ import scalafx.Includes.jfxMouseEvent2sfx
 import scalafx.animation.AnimationTimer
 import scalafx.application.JFXApp3
 import scalafx.application.JFXApp3.PrimaryStage
-import scalafx.scene.{Group, Scene}
+import scalafx.geometry.Insets
+import scalafx.scene.Scene
 import scalafx.scene.canvas.Canvas
+import scalafx.scene.control.{Label, Slider, TitledPane}
 import scalafx.scene.input.MouseButton
+import scalafx.scene.layout.{BorderPane, VBox}
 import scalafx.scene.paint.Color
+import scalafx.scene.text.Font
+import boids.UIComponents._
 
 object GUI extends JFXApp3 {
-  val worldWidth: Double = 1200.0
-  val worldHeight: Double = 800.0
-  val boidsCount: Int = 5000
-  val boidSize: Double = 4.0
-  val detectionRange: Double = 30.0
-  val maxForce: Double = 0.7
-  val maxSpeed: Double = 2.0
-  val minSpeed: Double = maxSpeed / 5
-  val cohesionStrength: Double = 0.01
-  val alignmentStrength: Double = 0.02
-  val separationStrength: Double = 0.8
-  val separationRange: Double = 10.0
-  val cursorInfluenceRange: Double = 75.0
-  val cursorInfluenceStrength: Double = 0.15
+  val initialWorldWidth: Double = 1200.0
+  val initialWorldHeight: Double = 800.0
 
-  private var leftMousePressed: Boolean = false
-  private var rightMousePressed: Boolean = false
+  private var boidsCount: Int                 = 1000
+  private var boidSize: Double                = 7.0
+  private var detectionRange: Double          = 30.0
+  private var maxForce: Double                = 0.7
+  private var maxSpeed: Double                = 2.0
+  private var minSpeed: Double                = maxSpeed / 5
+  private var cohesionStrength: Double        = 0.01
+  private var alignmentStrength: Double       = 0.02
+  private var separationStrength: Double      = 0.8
+  private var separationRange: Double         = 10.0
+  private var cursorInfluenceRange: Double    = 75.0
+  private var cursorInfluenceStrength: Double = 0.15
+
+  private var leftMousePressed: Boolean       = false
+  private var rightMousePressed: Boolean      = false
   private var lastCursorPosition: Option[Point2D] = None
-  private var cursorPosition: Option[Point2D] = None
-
-  private val simulation = new CoreSimulator(
-    worldWidth, worldHeight, boidsCount, boidSize,
-    detectionRange, maxForce, maxSpeed, minSpeed,
-    cohesionStrength, alignmentStrength,
-    separationStrength, separationRange,
-    cursorInfluenceRange, cursorInfluenceStrength
-  )
+  private var cursorPosition: Option[Point2D]     = None
+  var changeMade = false
+  private var simulation: CoreSimulator = _
 
   override def start(): Unit = {
-    val rootGroup = new Group()
-    val canvas = new Canvas(worldWidth, worldHeight)
-    val gc = canvas.graphicsContext2D
+    val canvas = new Canvas(initialWorldWidth, initialWorldHeight)
+    val gc     = canvas.graphicsContext2D
 
     canvas.onMouseMoved = e => updateDragVector(Point2D(e.x, e.y))
     canvas.onMouseDragged = e => updateDragVector(Point2D(e.x, e.y))
-
     canvas.onMouseExited = _ =>
       cursorPosition = None
 
     canvas.onMousePressed = e =>
-      e.button match
-        case MouseButton.Primary => leftMousePressed = true
+      e.button match {
+        case MouseButton.Primary   => leftMousePressed = true
         case MouseButton.Secondary => rightMousePressed = true
-        case _ =>
+        case _                     =>
+      }
     canvas.onMouseReleased = e =>
-      e.button match
-        case MouseButton.Primary => leftMousePressed = false
+      e.button match {
+        case MouseButton.Primary   => leftMousePressed = false
         case MouseButton.Secondary => rightMousePressed = false
-        case _ =>
+        case _                     =>
+      }
 
-    rootGroup.children.add(canvas)
-    rootGroup.children.add(createLegend())
+    // cohesion
+    val cohesionPane = createParameterControl(
+      "Cohesion Strength",
+      SliderConfig(0.0, 0.5, cohesionStrength, 0.1, 0.005, "%.3f", "Cohesion"),
+      value => {
+        cohesionStrength = value
+        if (simulation != null) {
+          simulation.cohesionStrength = cohesionStrength
+          changeMade = true
+        }
+      }
+    )
+
+    // alignment
+    val alignmentPane = createParameterControl(
+      "Alignment Strength",
+      SliderConfig(0.0, 0.5, alignmentStrength, 0.1, 0.005, "%.3f", "Alignment"),
+      value => {
+        alignmentStrength = value
+        if (simulation != null) {
+          simulation.alignmentStrength = alignmentStrength
+          changeMade = true
+        }
+      }
+    )
+
+    // separation
+    val separationPane = createParameterControl(
+      "Separation Strength",
+      SliderConfig(0.0, 1.0, separationStrength, 0.5, 0.01, "%.2f", "Separation"),
+      value => {
+        separationStrength = value
+        if (simulation != null) {
+          simulation.separationStrength = separationStrength
+          changeMade = true
+        }
+      }
+    )
+
+    // max speed
+    val speedPane = createParameterControl(
+      "Max / Min Speed",
+      SliderConfig(0.1, 5.0, maxSpeed, 1.0, 0.2, "%.2f", "Max Speed"),
+      value => {
+        maxSpeed = value
+        minSpeed = maxSpeed / 5.0
+        if (simulation != null) {
+          simulation.maxSpeed = maxSpeed
+          simulation.minSpeed = minSpeed
+        }
+      }
+    )
+
+    val rightSidebar = new VBox(10) {
+      padding = Insets(10)
+      children = Seq(cohesionPane, alignmentPane, separationPane, speedPane)
+      minWidth = 200
+      maxWidth = 250
+    }
+
+    val rootPane = new BorderPane {
+      center = canvas
+      right  = rightSidebar
+    }
 
     stage = new PrimaryStage {
-      title = "Boids Simulation"
-      width = worldWidth
-      height = worldHeight
+      title = "Boids Simulation with Sliders"
+      maximized = true
       scene = new Scene {
         fill = Color.Black
-        content = rootGroup
+        content = rootPane
       }
+    }
+
+    canvas.width  <= rootPane.width - rightSidebar.minWidth.value
+    canvas.height <= rootPane.height
+    simulation = new CoreSimulator(
+      canvas.width.value,
+      canvas.height.value,
+      boidsCount,
+      boidSize,
+      detectionRange,
+      maxForce,
+      maxSpeed,
+      minSpeed,
+      cohesionStrength,
+      alignmentStrength,
+      separationStrength,
+      separationRange,
+      cursorInfluenceRange,
+      cursorInfluenceStrength
+    )
+
+    rootPane.width.onChange { (_, _, newWidth) =>
+      val availableWidth = newWidth.doubleValue() - rightSidebar.minWidth.value
+      simulation.worldWidth = availableWidth
+    }
+    rootPane.height.onChange { (_, _, newHeight) =>
+      simulation.worldHeight = newHeight.doubleValue()
     }
 
     val timer = AnimationTimer { _ =>
       simulation.updateCursorState(cursorPosition, leftMousePressed, rightMousePressed)
-      simulation.update()
+      simulation.update(changeMade)
+      changeMade = false
       renderBoids(gc)
     }
     timer.start()
   }
 
   private def updateDragVector(newPos: Point2D): Unit = {
-    lastCursorPosition match
+    lastCursorPosition match {
       case Some(last) if leftMousePressed || rightMousePressed =>
         val dragVector = newPos - last
         simulation.setDragVector(dragVector)
       case _ =>
         simulation.setDragVector(Point2D(0, 0))
+    }
     cursorPosition = Some(newPos)
     lastCursorPosition = Some(newPos)
   }
 
   private def renderBoids(gc: scalafx.scene.canvas.GraphicsContext): Unit = {
-    def drawBoidAsTriangle(boid: Boid): Unit = {
+    gc.clearRect(0, 0, gc.canvas.width.value, gc.canvas.height.value)
+
+    simulation.allBoids.foreach { boid =>
       val dir = boid.velocity.normalize()
       val perp = Point2D(-dir.y, dir.x)
       val size = boidSize
       val baseWidth = size / 2
 
-      val tip = boid.position + dir * size
+      val tip      = boid.position + dir * size
       val baseLeft = boid.position - dir * (size * 0.3) + perp * baseWidth
       val baseRight = boid.position - dir * (size * 0.3) - perp * baseWidth
 
-      gc.setFill(getColorBySpeed(speed = boid.velocity.magnitude))
+      gc.setFill(getColorBySpeed(boid.velocity.magnitude))
       gc.fillPolygon(
         Array(tip.x, baseLeft.x, baseRight.x),
         Array(tip.y, baseLeft.y, baseRight.y),
@@ -111,13 +203,7 @@ object GUI extends JFXApp3 {
       )
     }
 
-    gc.clearRect(0, 0, worldWidth, worldHeight)
-
-    simulation.allBoids.foreach(drawBoidAsTriangle)
-
-    if (simulation.allBoids.nonEmpty) {
-      val first = simulation.allBoids.head
-
+    simulation.allBoids.headOption.foreach { first =>
       gc.setStroke(Color.LightBlue)
       gc.setLineWidth(1)
       gc.strokeOval(
@@ -144,38 +230,9 @@ object GUI extends JFXApp3 {
     if (clampedSpeed < 0.5) {
       val t = clampedSpeed * 2
       Color(1.0, 1.0 - t, 1.0 - t, 1.0)
-
     } else {
       val t = (clampedSpeed - 0.5) * 2
       Color(t, t, 1.0, 1.0)
     }
-  }
-
-
-  private def createLegend(): Group = {
-    val legend = new Group
-
-    val detectionLegendLine = new scalafx.scene.shape.Line {
-      startX = 10; startY = 20; endX = 30; endY = 20
-      stroke = Color.LightBlue; strokeWidth = 1
-    }
-    val detectionLegendText = new scalafx.scene.text.Text {
-      x = 35; y = 24; text = "Detection Range"
-      fill = Color.LightBlue; font = scalafx.scene.text.Font("Arial", 12)
-    }
-    val separationLegendLine = new scalafx.scene.shape.Line {
-      startX = 10; startY = 40; endX = 30; endY = 40
-      stroke = Color.Red; strokeWidth = 1
-    }
-    val separationLegendText = new scalafx.scene.text.Text {
-      x = 35; y = 44; text = "Separation Distance"
-      fill = Color.Red; font = scalafx.scene.text.Font("Arial", 12)
-    }
-
-    legend.children.addAll(
-      detectionLegendLine, detectionLegendText,
-      separationLegendLine, separationLegendText
-    )
-    legend
   }
 }

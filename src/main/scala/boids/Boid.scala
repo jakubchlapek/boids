@@ -1,7 +1,5 @@
 package boids
 
-import boids.GUI.{maxSpeed, worldHeight, worldWidth}
-
 case class Boid(var position: Point2D,
                 var velocity: Point2D,
                 var voxelCoord: VoxelCoord,
@@ -29,7 +27,7 @@ case class Boid(var position: Point2D,
       steerForce
 
   /** slows and turns boid around when he touches the borders */
-  private def constrainToBoundaries(): Unit =
+  private def constrainToBoundaries(worldWidth: Double, worldHeight: Double): Unit =
     var newX = position.x
     var newY = position.y
 
@@ -45,10 +43,10 @@ case class Boid(var position: Point2D,
     if (newX != position.x || newY != position.y)
       position = Point2D(newX, newY)
 
-  
-  def applyPhysics(): Unit =
+
+  def applyPhysics(maxSpeed: Double, worldWidth: Double, worldHeight: Double): Unit =
     velocity += acceleration
     acceleration = Point2D(0, 0)
     velocity = velocity.limit(maxSpeed)
     position = move()
-    constrainToBoundaries()
+    constrainToBoundaries(worldWidth, worldHeight)

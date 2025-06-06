@@ -1,20 +1,20 @@
 package boids
 
 class CoreSimulator(
-                     val worldWidth: Double,
-                     val worldHeight: Double,
-                     val boidsCount: Int,
-                     val boidSize: Double,
-                     val detectionRange: Double,
-                     val maxForce: Double,
-                     val maxSpeed: Double,
-                     val minSpeed: Double,
-                     val cohesionStrength: Double,
-                     val alignmentStrength: Double,
-                     val separationStrength: Double,
-                     val separationRange: Double,
-                     val cursorInfluenceRange: Double,
-                     val cursorInfluenceStrength: Double
+                     var worldWidth: Double,
+                     var worldHeight: Double,
+                     var boidsCount: Int,
+                     var boidSize: Double,
+                     var detectionRange: Double,
+                     var maxForce: Double,
+                     var maxSpeed: Double,
+                     var minSpeed: Double,
+                     var cohesionStrength: Double,
+                     var alignmentStrength: Double,
+                     var separationStrength: Double,
+                     var separationRange: Double,
+                     var cursorInfluenceRange: Double,
+                     var cursorInfluenceStrength: Double
                    ) {
   private var cursorState = CursorState(None, false, false)
   private var dragVector: Point2D = Point2D(0, 0)
@@ -61,7 +61,21 @@ class CoreSimulator(
     cursorState = CursorState(position, leftPressed, rightPressed)
   }
 
-  def update(): Unit = {
+  def updateSettings(): Unit = {
+    flockingBehavior.maxSpeed = maxSpeed
+    flockingBehavior.maxForce = maxForce
+    flockingBehavior.detectionRange = detectionRange
+    flockingBehavior.cohesionStrength = cohesionStrength
+    flockingBehavior.alignmentStrength = alignmentStrength
+    flockingBehavior.separationStrength = separationStrength
+    flockingBehavior.separationRange = separationRange
+    flockingBehavior.cursorInfluenceRange = cursorInfluenceRange
+    flockingBehavior.cursorInfluenceStrength = cursorInfluenceStrength
+  }
+
+  def update(changeMade: Boolean): Unit = {
+    if (changeMade)
+      updateSettings()
     val grid = spatialManager.buildGrid(allBoids)
 
     allBoids.foreach { boid =>
@@ -73,7 +87,7 @@ class CoreSimulator(
         cursorState.position, cursorState.leftPressed, cursorState.rightPressed, dragVector
       )
       boid.applyForce(force)
-      boid.applyPhysics()
+      boid.applyPhysics(maxSpeed, worldWidth, worldHeight)
     }
   }
 }

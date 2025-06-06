@@ -1,17 +1,17 @@
 package boids
 
 class FlockingBehavior(
-                        val maxSpeed: Double,
-                        val maxForce: Double,
-                        val detectionRange: Double,
-                        val cohesionStrength: Double,
-                        val alignmentStrength: Double,
-                        val separationStrength: Double,
-                        val separationRange: Double,
-                        val worldWidth: Double,
-                        val worldHeight: Double,
-                        val cursorInfluenceRange: Double,
-                        val cursorInfluenceStrength: Double = 100
+                        var maxSpeed: Double,
+                        var maxForce: Double,
+                        var detectionRange: Double,
+                        var cohesionStrength: Double,
+                        var alignmentStrength: Double,
+                        var separationStrength: Double,
+                        var separationRange: Double,
+                        var worldWidth: Double,
+                        var worldHeight: Double,
+                        var cursorInfluenceRange: Double,
+                        var cursorInfluenceStrength: Double = 100
                       ) {
   
   /** calculate all flocking forces for a boid and return the combined steering force */
