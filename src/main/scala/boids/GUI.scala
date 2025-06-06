@@ -1,17 +1,13 @@
 package boids
 
+import scalafx.Includes.jfxMouseEvent2sfx
+import scalafx.animation.AnimationTimer
 import scalafx.application.JFXApp3
 import scalafx.application.JFXApp3.PrimaryStage
-import scalafx.scene.Scene
-import scalafx.scene.paint.Color
-import scalafx.animation.AnimationTimer
-import scalafx.scene.Group
+import scalafx.scene.{Group, Scene}
 import scalafx.scene.canvas.Canvas
-import scalafx.scene.Cursor
-import scalafx.Includes.jfxMouseEvent2sfx
-import scalafx.scene.input.InputIncludes.jfxMouseEvent2sfx
-import scalafx.scene.input.MouseEvent
 import scalafx.scene.input.MouseButton
+import scalafx.scene.paint.Color
 
 object GUI extends JFXApp3 {
   val worldWidth: Double = 1200.0
@@ -47,18 +43,18 @@ object GUI extends JFXApp3 {
     val canvas = new Canvas(worldWidth, worldHeight)
     val gc = canvas.graphicsContext2D
 
-    canvas.onMouseMoved = (e) => updateDragVector(Point2D(e.x, e.y))
-    canvas.onMouseDragged = (e) => updateDragVector(Point2D(e.x, e.y))
+    canvas.onMouseMoved = e => updateDragVector(Point2D(e.x, e.y))
+    canvas.onMouseDragged = e => updateDragVector(Point2D(e.x, e.y))
 
     canvas.onMouseExited = _ =>
       cursorPosition = None
 
-    canvas.onMousePressed = (e) =>
+    canvas.onMousePressed = e =>
       e.button match
         case MouseButton.Primary => leftMousePressed = true
         case MouseButton.Secondary => rightMousePressed = true
         case _ =>
-    canvas.onMouseReleased = (e) =>
+    canvas.onMouseReleased = e =>
       e.button match
         case MouseButton.Primary => leftMousePressed = false
         case MouseButton.Secondary => rightMousePressed = false
