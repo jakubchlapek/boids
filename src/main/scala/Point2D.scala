@@ -17,14 +17,21 @@ case class Point2D(x: Double, y: Double):
     Point2D(x / scalar, y / scalar)
 
   def normalize(): Point2D =
-    this / magnitude
-    this
-    
+    if (magnitude > 0) this / magnitude else this
+
+
   def dot(other: Point2D): Double =
     x * other.x + y * other.y
-    
+  
   def distance(other: Point2D): Double =
     math.sqrt(math.pow(x - other.x, 2) + math.pow(y - other.y, 2))
+
+  /** distance between two points, without squaring.*/
+  def distanceSquared(other: Point2D): Double = {
+    val dx = x - other.x
+    val dy = y - other.y
+    dx * dx + dy * dy
+  }
 
   /** return new vector, limited if the magnitude is over the max */
   def limit(max: Double): Point2D = {

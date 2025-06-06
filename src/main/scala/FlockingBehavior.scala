@@ -5,35 +5,21 @@ class FlockingBehavior(
                         val cohesionStrength: Double,
                         val alignmentStrength: Double,
                         val separationStrength: Double,
-                        val separationDistance: Double,
+                        val separationRange: Double,
                         val worldWidth: Double,
                         val worldHeight: Double
                       ) {
-
+  
   /** calculate all flocking forces for a boid and return the combined steering force */
-  def calculateFlockingForces(boid: Boid, allBoids: Seq[Boid]): Point2D = {
-    val neighbors = findNeighbors(boid, allBoids)
-    val closeNeighbors = findCloseNeighbors(boid, neighbors)
-
+  def calculateFlockingForces( boid: Boid, 
+                               voxelGrid: Map[VoxelCoord, Seq[Boid]], 
+                               neighbors: Seq[Boid], 
+                               closeNeighbors:Seq[Boid]): Point2D = {
     val cohesion = if (neighbors.nonEmpty) calculateCohesionForce(boid, neighbors) else Point2D(0, 0)
     val alignment = if (neighbors.nonEmpty) calculateAlignmentForce(boid, neighbors) else Point2D(0, 0)
     val separation = if (closeNeighbors.nonEmpty) calculateSeparationForce(boid, closeNeighbors) else Point2D(0, 0)
 
     cohesion + alignment + separation
-  }
-
-  /** find all neighbors within detection range */
-  def findNeighbors(boid: Boid, allBoids: Seq[Boid]): Seq[Boid] = {
-    allBoids.filter(
-      other => other != boid && other.position.distance(boid.position) < detectionRange
-    )
-  }
-
-  /** find neighbors that are too close */
-  def findCloseNeighbors(boid: Boid, neighbors: Seq[Boid]): Seq[Boid] = {
-    neighbors.filter(
-      neighbor => neighbor.position.distance(boid.position) < separationDistance
-    )
   }
 
   /** calculate cohesion force - attraction to center of mass */

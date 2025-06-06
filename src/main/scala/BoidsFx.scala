@@ -10,31 +10,44 @@ object BoidsFx extends JFXApp3 {
   // config parameters
   val worldWidth: Double = 1200
   val worldHeight: Double = 800
-  val boidsCount: Int = 100
+  val boidsCount: Int = 5000
   val detectionRange: Double = 30
   val maxForce = 0.7 // max flocking force
   val maxSpeed: Double = 2.0
   val minSpeed: Double = maxSpeed / 5
   val cohesionStrength: Double = 0.01
-  val alignmentStrength: Double = 0.03
+  val alignmentStrength: Double = 0.02
   val separationStrength: Double = 0.8
-  val separationDistance: Double = 15
+  val separationRange: Double = 10
 
   val flockingBehavior = new FlockingBehavior(
     maxSpeed, maxForce, detectionRange,
     cohesionStrength, alignmentStrength,
-    separationStrength, separationDistance,
+    separationStrength, separationRange,
     worldWidth, worldHeight
   )
+
+  val spatialManager = new SpatialManager(
+    voxelSize = detectionRange,
+    detectionRange = detectionRange,
+    separationRange = separationRange
+  )
+
   var allBoids: Seq[Boid] = Seq()
   var detectionCircle: Circle = _
   var separationCircle: Circle = _
 
   def updateAllBoids(): Unit = {
+    val grid: Map[VoxelCoord, Seq[Boid]] = spatialManager.buildGrid(allBoids)
+
     // for each boid:
     allBoids.foreach(boid => {
+      // get neighbors
+      val neighbors: Seq[Boid] = spatialManager.findNeighbors(boid, grid)
+      val closeNeighbors: Seq[Boid] = spatialManager.findCloseNeighbors(boid, neighbors)
+
       // calculate the forces
-      val force = flockingBehavior.calculateFlockingForces(boid, allBoids)
+      val force: Point2D = flockingBehavior.calculateFlockingForces(boid, grid, neighbors, closeNeighbors)
       boid.applyForce(force)
       // move the boid
       boid.applyPhysics()
@@ -61,7 +74,12 @@ object BoidsFx extends JFXApp3 {
       val velY: Double = (math.random() * 2 - 1) * (maxSpeed / 4)
       val initialVelocity = Point2D(velX, velY)
 
-      Boid(position = Point2D(x, y), velocity = initialVelocity, size=5)
+      Boid(
+        position = Point2D(x, y), 
+        velocity = initialVelocity, 
+        voxelCoord=spatialManager.getVoxelCoord(Point2D(x,y)), 
+        size=2
+      )
     }
 
     // visualization circles for boid
@@ -83,7 +101,7 @@ object BoidsFx extends JFXApp3 {
       separationCircle = new Circle {
         centerX = firstBoid.position.x
         centerY = firstBoid.position.y
-        radius = separationDistance
+        radius = separationRange
         fill = Color.Transparent
         stroke = Color.Red
         strokeWidth = 1

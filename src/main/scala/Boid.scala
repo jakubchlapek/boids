@@ -4,6 +4,7 @@ import scalafx.scene.shape.Polygon
 
 case class Boid(var position: Point2D,
                 var velocity: Point2D,
+                var voxelCoord: VoxelCoord,
                 var acceleration: Point2D = Point2D(0, 0),
                 size: Double = 10):
   val shape: Polygon = new Polygon {
