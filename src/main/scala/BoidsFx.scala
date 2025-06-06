@@ -4,6 +4,7 @@ import scalafx.scene.Scene
 import scalafx.scene.paint.Color
 import scalafx.animation.AnimationTimer
 import scalafx.scene.Group
+import scalafx.scene.canvas.Canvas
 import scalafx.scene.shape.Circle
 
 object BoidsFx extends JFXApp3 {
@@ -11,6 +12,7 @@ object BoidsFx extends JFXApp3 {
   val worldWidth: Double = 1200
   val worldHeight: Double = 800
   val boidsCount: Int = 5000
+  val boidSize: Double = 4
   val detectionRange: Double = 30
   val maxForce = 0.7 // max flocking force
   val maxSpeed: Double = 2.0
@@ -52,20 +54,11 @@ object BoidsFx extends JFXApp3 {
       // move the boid
       boid.applyPhysics()
     })
-
-    if (allBoids.nonEmpty) {
-      val firstBoid = allBoids.head
-      detectionCircle.centerX = firstBoid.position.x
-      detectionCircle.centerY = firstBoid.position.y
-
-      separationCircle.centerX = firstBoid.position.x
-      separationCircle.centerY = firstBoid.position.y
-    }
   }
 
   private def initializeBoids(rootGroup: Group, boidsCount: Int): Seq[Boid] = {
     // initiated at start
-    val boids: Seq[Boid] = for (i <- 0 until boidsCount) yield {
+    for (i <- 0 until boidsCount) yield {
       val x: Double = math.random() * worldWidth
       val y: Double = math.random() * worldHeight
 
@@ -75,53 +68,71 @@ object BoidsFx extends JFXApp3 {
       val initialVelocity = Point2D(velX, velY)
 
       Boid(
-        position = Point2D(x, y), 
-        velocity = initialVelocity, 
-        voxelCoord=spatialManager.getVoxelCoord(Point2D(x,y)), 
-        size=2
+        position = Point2D(x, y),
+        velocity = initialVelocity,
+        voxelCoord=spatialManager.getVoxelCoord(Point2D(x,y))
       )
     }
+  }
 
-    // visualization circles for boid
-    if (boids.nonEmpty) {
-      val firstBoid = boids.head
+  private def renderBoids(gc: scalafx.scene.canvas.GraphicsContext): Unit = {
+    def drawBoidAsTriangle(boid: Boid): Unit = {
+      val dir = boid.velocity.normalize()
+      val perp = Point2D(-dir.y, dir.x) // perpendicular for triangle base
 
-      firstBoid.shape.fill = Color.Purple
+      val size = boidSize
+      val baseWidth = size / 2
 
-      detectionCircle = new Circle {
-        centerX = firstBoid.position.x
-        centerY = firstBoid.position.y
-        radius = detectionRange
-        fill = Color.Transparent
-        stroke = Color.LightBlue
-        strokeWidth = 1
-        opacity = 0.6
-      }
+      // triangle tip (forward)
+      val tip = boid.position + dir * size
+      val baseLeft = boid.position - dir * (size * 0.3) + perp * baseWidth
+      val baseRight = boid.position - dir * (size * 0.3) - perp * baseWidth
 
-      separationCircle = new Circle {
-        centerX = firstBoid.position.x
-        centerY = firstBoid.position.y
-        radius = separationRange
-        fill = Color.Transparent
-        stroke = Color.Red
-        strokeWidth = 1
-        opacity = 0.6
-      }
-
-      rootGroup.children.add(detectionCircle)
-      rootGroup.children.add(separationCircle)
+      gc.setFill(Color.White)
+      gc.fillPolygon(
+        Array(tip.x, baseLeft.x, baseRight.x),
+        Array(tip.y, baseLeft.y, baseRight.y),
+        3
+      )
     }
+    gc.clearRect(0, 0, worldWidth, worldHeight)
 
-    rootGroup.children ++= boids.map(_.shape)
-    boids
+    // draw boids
+    gc.setFill(Color.White)
+
+    allBoids.foreach(drawBoidAsTriangle)
+
+    // draw ranges
+    if (allBoids.nonEmpty) {
+      val first = allBoids.head
+
+      gc.setStroke(Color.LightBlue)
+      gc.setLineWidth(1)
+      gc.strokeOval(
+        first.position.x - detectionRange,
+        first.position.y - detectionRange,
+        detectionRange * 2,
+        detectionRange * 2
+      )
+
+      gc.setStroke(Color.Red)
+      gc.strokeOval(
+        first.position.x - separationRange,
+        first.position.y - separationRange,
+        separationRange * 2,
+        separationRange * 2
+      )
+    }
   }
 
   override def start(): Unit = {
     val rootGroup: Group = new Group()
+    val canvas = new Canvas(worldWidth, worldHeight)
+    val gc = canvas.graphicsContext2D
+    rootGroup.children.add(canvas)
+    rootGroup.children.add(createLegend())
 
     allBoids = initializeBoids(rootGroup, boidsCount)
-
-    rootGroup.children.add(createLegend())
 
     stage = new PrimaryStage {
       title = "Boids Sim"
@@ -137,6 +148,7 @@ object BoidsFx extends JFXApp3 {
       now =>
         // called each frame at 60 fps
         updateAllBoids()
+        renderBoids(gc)
     }
     timer.start()
   }
