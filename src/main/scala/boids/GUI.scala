@@ -15,10 +15,10 @@ import scalafx.scene.text.Font
 import boids.UIComponents._
 
 object GUI extends JFXApp3 {
-  val initialWorldWidth: Double = 1200.0
-  val initialWorldHeight: Double = 800.0
+  private val initialWorldWidth: Double = 1200.0
+  private val initialWorldHeight: Double = 800.0
 
-  private var boidsCount: Int                 = 1000
+  private var boidsCount: Int                 = 500
   private var boidSize: Double                = 7.0
   private var detectionRange: Double          = 30.0
   private var maxForce: Double                = 0.7
@@ -26,7 +26,7 @@ object GUI extends JFXApp3 {
   private var minSpeed: Double                = maxSpeed / 5
   private var cohesionStrength: Double        = 0.01
   private var alignmentStrength: Double       = 0.02
-  private var separationStrength: Double      = 0.8
+  private var separationStrength: Double      = 0.5
   private var separationRange: Double         = 10.0
   private var cursorInfluenceRange: Double    = 75.0
   private var cursorInfluenceStrength: Double = 0.15
@@ -174,11 +174,39 @@ object GUI extends JFXApp3 {
       }
     )
 
+    // detection range
+    val detectionRangePane = createParameterControl(
+      "Detection Range",
+      SliderConfig(10.0, 100.0, detectionRange, 10.0, 1.0, "%.1f", "Detection Range"),
+      value => {
+        detectionRange = value
+        if (simulation != null) {
+          simulation.detectionRange = detectionRange
+          changeMade = true
+        }
+      }
+    )
+
+    // separation range
+    val separationRangePane = createParameterControl(
+      "Separation Range",
+      SliderConfig(5.0, 50.0, separationRange, 5.0, 1.0, "%.1f", "Separation Range"),
+      value => {
+        separationRange = value
+        if (simulation != null) {
+          simulation.separationRange = separationRange
+          changeMade = true
+        }
+      }
+    )
+
     Seq(
       cohesionPane,
       alignmentPane,
       separationPane,
-      speedPane
+      speedPane,
+      detectionRangePane,
+      separationRangePane
     )
   }
 
