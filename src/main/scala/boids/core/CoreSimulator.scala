@@ -1,4 +1,10 @@
-package boids
+package boids.core
+
+import boids.core.Boid
+import boids.*
+import boids.behavior.{FlockingBehavior, PredatorBehavior}
+import boids.physics.{Point2D, SpatialManager}
+import boids.util.CursorState
 
 class CoreSimulator(
                      var worldWidth: Double,

@@ -1,4 +1,7 @@
-package boids
+package boids.behavior
+
+import boids.core.{Boid, Predator}
+import boids.physics.{Point2D, VoxelCoord}
 
 class FlockingBehavior(
                         var maxForce: Double,

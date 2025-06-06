@@ -1,4 +1,6 @@
-package boids
+package boids.physics
+
+import boids.core.Boid
 
 type VoxelCoord = (Int, Int)
 

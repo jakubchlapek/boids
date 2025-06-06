@@ -1,4 +1,4 @@
-package boids
+package boids.ui
 
 import scalafx.geometry.Insets
 import scalafx.scene.control.{Label, Slider, TitledPane}

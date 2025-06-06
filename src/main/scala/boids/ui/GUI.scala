@@ -1,5 +1,8 @@
-package boids
+package boids.ui
 
+import boids.UIComponents.*
+import boids.core.CoreSimulator
+import boids.physics.Point2D
 import scalafx.Includes.jfxMouseEvent2sfx
 import scalafx.animation.AnimationTimer
 import scalafx.application.JFXApp3
@@ -12,7 +15,6 @@ import scalafx.scene.input.MouseButton
 import scalafx.scene.layout.{BorderPane, VBox}
 import scalafx.scene.paint.Color
 import scalafx.scene.text.Font
-import boids.UIComponents._
 
 object GUI extends JFXApp3 {
   private val initialWorldWidth: Double = 1200.0

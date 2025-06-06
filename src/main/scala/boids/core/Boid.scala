@@ -1,4 +1,7 @@
-package boids
+package boids.core
+
+import boids.Boid
+import boids.physics.Point2D
 
 class Boid(var position: Point2D,
                 var velocity: Point2D,

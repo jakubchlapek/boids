@@ -1,4 +1,8 @@
-package boids
+package boids.core
+
+import boids.core.Boid
+import boids.Predator
+import boids.physics.Point2D
 
 class Predator(
                 position: Point2D,

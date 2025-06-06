@@ -1,4 +1,4 @@
-package boids
+package boids.physics
 
 case class Point2D(x: Double, y: Double):
   lazy val magnitude: Double = math.sqrt(math.pow(x, 2) + math.pow(y, 2))

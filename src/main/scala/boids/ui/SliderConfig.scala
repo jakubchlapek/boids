@@ -1,4 +1,4 @@
-package boids
+package boids.ui
 
 /** class for slider parameters */
 case class SliderConfig(

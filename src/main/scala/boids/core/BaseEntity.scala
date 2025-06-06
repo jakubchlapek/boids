@@ -1,4 +1,6 @@
-package boids
+package boids.core
+
+import boids.physics.Point2D
 
 trait BaseEntity {
   def position: Point2D
