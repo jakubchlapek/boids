@@ -7,6 +7,12 @@ import scalafx.scene.text.Font
 
 /** reusable UI components */
 object UIComponents {
+  /** creates a TitledPane from a ParameterSlider */
+  def createParameterControl[T](paramSlider: ParameterSlider[T]): TitledPane = {
+    val config = paramSlider.toSliderConfig
+    val updateAction = paramSlider.updateAction(paramSlider.initialValue)
+    createParameterControl(paramSlider.title, config, updateAction)
+  }
   /** returns slider with given label and current value  */
   def createParameterSlider(config: SliderConfig, updateAction: Double => Unit): (Slider, Label) = {
     val slider = new Slider {
@@ -35,14 +41,27 @@ object UIComponents {
 
   /** returns TitledPane with given title */
   def createParameterPane(title: String, slider: Slider, label: Label): TitledPane = {
-    new TitledPane {
+    val pane = new TitledPane {
       text = title
       content = new VBox(5) {
         children = Seq(label, slider)
         padding = Insets(5)
       }
-      expanded = true
+      expanded = false
+      animated = false
     }
+
+    // Force layout update when expanded/collapsed
+    pane.expandedProperty().addListener((_, _, _) => {
+      // Request layout update
+      if (pane.getScene != null) {
+        javafx.application.Platform.runLater(() => {
+          pane.getScene.getWindow.sizeToScene()
+        })
+      }
+    })
+
+    pane
   }
 
   /** helper to create slider and pane */

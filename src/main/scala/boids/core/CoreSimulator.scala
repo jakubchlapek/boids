@@ -112,6 +112,16 @@ class CoreSimulator(
     predatorBehavior.maxForce = maxForce
   }
 
+  /** reinitialize boids with current settings */
+  def reinitializeBoids(): Unit = {
+    allBoids = initializeBoids()
+  }
+
+  /** reinitialize predators with current settings */
+  def reinitializePredators(): Unit = {
+    allPredators = initializePredators()
+  }
+
   def update(changeMade: Boolean): Unit = {
     if (changeMade)
       updateSettings()

@@ -1,6 +1,7 @@
 package boids.ui
 
 import boids.ui.UIComponents.*
+import boids.ui.ParameterSlider
 import boids.core.CoreSimulator
 import boids.physics.Point2D
 import scalafx.Includes.jfxMouseEvent2sfx
@@ -10,7 +11,7 @@ import scalafx.application.JFXApp3.PrimaryStage
 import scalafx.geometry.Insets
 import scalafx.scene.Scene
 import scalafx.scene.canvas.Canvas
-import scalafx.scene.control.{Label, Slider, TitledPane}
+import scalafx.scene.control.{Label, ScrollPane, Slider, TitledPane}
 import scalafx.scene.input.MouseButton
 import scalafx.scene.layout.{BorderPane, VBox}
 import scalafx.scene.paint.Color
@@ -20,18 +21,25 @@ object GUI extends JFXApp3 {
   private val initialWorldWidth: Double = 1200.0
   private val initialWorldHeight: Double = 800.0
 
-  private var boidsCount: Int                 = 15000
-  private var boidSize: Double                = 2.0
-  private var detectionRange: Double          = 5.0
+  // Boid parameters
+  private var boidsCount: Int                 = 1000
+  private var boidSize: Double                = 4.0
+  private var detectionRange: Double          = 25.0
   private var maxForce: Double                = 0.7
   private var maxSpeed: Double                = 1.2
   private var minSpeed: Double                = maxSpeed / 5
   private var cohesionStrength: Double        = 0.01
   private var alignmentStrength: Double       = 0.02
   private var separationStrength: Double      = 0.5
-  private var separationRange: Double         = 3.0
+  private var separationRange: Double         = 15.0
   private var cursorInfluenceRange: Double    = 75.0
   private var cursorInfluenceStrength: Double = 0.15
+
+  // Predator parameters
+  private var predatorCount: Int              = 2
+  private var predatorHuntingRange: Double    = 150.0
+  private var predatorSpeedMultiplier: Double = 1.5
+  private var panicSpeedMultiplier: Double    = 1.5
 
   private var leftMousePressed: Boolean       = false
   private var rightMousePressed: Boolean      = false
@@ -63,15 +71,35 @@ object GUI extends JFXApp3 {
       }
 
     val settingPanes: Seq[TitledPane] = getSettingPanes
-    val rightSidebar = new VBox(10) {
+    val sidebarContent = new VBox(10) {
       padding = Insets(10)
       children = settingPanes
       minWidth = 200
       maxWidth = 250
     }
 
+    val rightSidebar = new ScrollPane {
+      content = sidebarContent
+      fitToWidth = true
+      hbarPolicy = ScrollPane.ScrollBarPolicy.Never
+      vbarPolicy = ScrollPane.ScrollBarPolicy.AsNeeded
+      minWidth = 250
+      maxWidth = 250
+      prefWidth = 250
+    }
+
+    import scalafx.scene.layout.AnchorPane
+
+    val canvasPane = new AnchorPane {
+      children = canvas
+      AnchorPane.setTopAnchor(canvas, 0.0)
+      AnchorPane.setBottomAnchor(canvas, 0.0)
+      AnchorPane.setLeftAnchor(canvas, 0.0)
+      AnchorPane.setRightAnchor(canvas, 0.0)
+    }
+
     val rootPane = new BorderPane {
-      center = canvas
+      center = canvasPane
       right  = rightSidebar
     }
 
@@ -100,13 +128,17 @@ object GUI extends JFXApp3 {
       separationStrength,
       separationRange,
       cursorInfluenceRange,
-      cursorInfluenceStrength
+      cursorInfluenceStrength,
+      predatorCount,
+      predatorHuntingRange,
+      predatorSpeedMultiplier,
+      panicSpeedMultiplier
     )
 
     def updateCanvasSize(): Unit = {
       val sceneWidth = stage.width.value
       val sceneHeight = stage.height.value
-      val sidebarWidth = rightSidebar.minWidth.value
+      val sidebarWidth = rightSidebar.width.value
 
       val minCanvasWidth = 300.0
       val requiredWidth = sidebarWidth + minCanvasWidth
@@ -136,6 +168,11 @@ object GUI extends JFXApp3 {
       updateCanvasSize()
     })
 
+    // Update canvas size when sidebar width changes
+    rightSidebar.width.addListener((obs, oldVal, newVal) => {
+      updateCanvasSize()
+    })
+
     stage.onShown = _ => {
       javafx.application.Platform.runLater { () =>
         updateCanvasSize()
@@ -152,64 +189,58 @@ object GUI extends JFXApp3 {
   }
 
 
-  private def getSettingPanes: Seq[TitledPane] = {
-    // cohesion
-    val cohesionPane = createParameterControl(
-      "Cohesion Strength",
-      SliderConfig(0.0, 0.5, cohesionStrength, 0.1, 0.005, "%.3f", "Cohesion"),
+  /** define all parameter sliders in one place */
+  private def defineParameterSliders(): Seq[ParameterSlider[_]] = {
+    // Boid count
+    val boidsCountSlider = ParameterSlider.forInt(
+      "Boids Count",
+      "Boids Count",
+      boidsCount,
+      100,
+      5000,
+      500,
+      100,
       value => {
-        cohesionStrength = value
+        boidsCount = value
         if (simulation != null) {
-          simulation.cohesionStrength = cohesionStrength
+          // Update boid count and reinitialize boids
+          simulation.boidsCount = boidsCount
+          simulation.reinitializeBoids()
           changeMade = true
         }
       }
     )
 
-    // alignment
-    val alignmentPane = createParameterControl(
-      "Alignment Strength",
-      SliderConfig(0.0, 0.5, alignmentStrength, 0.1, 0.005, "%.3f", "Alignment"),
+    // Boid size
+    val boidSizeSlider = ParameterSlider.forDouble(
+      "Boid Size",
+      "Boid Size",
+      boidSize,
+      1.0,
+      10.0,
+      1.0,
+      0.5,
+      "%.1f",
       value => {
-        alignmentStrength = value
+        boidSize = value
         if (simulation != null) {
-          simulation.alignmentStrength = alignmentStrength
+          // Update boidSize in the simulation
+          simulation.boidSize = boidSize
           changeMade = true
         }
       }
     )
 
-    // separation
-    val separationPane = createParameterControl(
-      "Separation Strength",
-      SliderConfig(0.0, 1.0, separationStrength, 0.5, 0.01, "%.2f", "Separation"),
-      value => {
-        separationStrength = value
-        if (simulation != null) {
-          simulation.separationStrength = separationStrength
-          changeMade = true
-        }
-      }
-    )
-
-    // max speed
-    val speedPane = createParameterControl(
-      "Max / Min Speed",
-      SliderConfig(0.1, 5.0, maxSpeed, 1.0, 0.2, "%.2f", "Max Speed"),
-      value => {
-        maxSpeed = value
-        minSpeed = maxSpeed / 5.0
-        if (simulation != null) {
-          simulation.maxSpeed = maxSpeed
-          simulation.minSpeed = minSpeed
-        }
-      }
-    )
-
-    // detection range
-    val detectionRangePane = createParameterControl(
+    // Detection range
+    val detectionRangeSlider = ParameterSlider.forDouble(
       "Detection Range",
-      SliderConfig(10.0, 100.0, detectionRange, 10.0, 1.0, "%.1f", "Detection Range"),
+      "Detection Range",
+      detectionRange,
+      10.0,
+      100.0,
+      10.0,
+      1.0,
+      "%.1f",
       value => {
         detectionRange = value
         if (simulation != null) {
@@ -219,10 +250,113 @@ object GUI extends JFXApp3 {
       }
     )
 
-    // separation range
-    val separationRangePane = createParameterControl(
+    // Max force
+    val maxForceSlider = ParameterSlider.forDouble(
+      "Max Force",
+      "Max Force",
+      maxForce,
+      0.1,
+      2.0,
+      0.2,
+      0.1,
+      "%.1f",
+      value => {
+        maxForce = value
+        if (simulation != null) {
+          simulation.maxForce = maxForce
+          changeMade = true
+        }
+      }
+    )
+
+    // Max speed
+    val maxSpeedSlider = ParameterSlider.forDouble(
+      "Max Speed",
+      "Max / Min Speed",
+      maxSpeed,
+      0.1,
+      5.0,
+      1.0,
+      0.2,
+      "%.2f",
+      value => {
+        maxSpeed = value
+        minSpeed = maxSpeed / 5.0
+        if (simulation != null) {
+          simulation.maxSpeed = maxSpeed
+          simulation.minSpeed = minSpeed
+          changeMade = true
+        }
+      }
+    )
+
+    // Cohesion strength
+    val cohesionStrengthSlider = ParameterSlider.forDouble(
+      "Cohesion",
+      "Cohesion Strength",
+      cohesionStrength,
+      0.0,
+      0.5,
+      0.1,
+      0.005,
+      "%.3f",
+      value => {
+        cohesionStrength = value
+        if (simulation != null) {
+          simulation.cohesionStrength = cohesionStrength
+          changeMade = true
+        }
+      }
+    )
+
+    // Alignment strength
+    val alignmentStrengthSlider = ParameterSlider.forDouble(
+      "Alignment",
+      "Alignment Strength",
+      alignmentStrength,
+      0.0,
+      0.5,
+      0.1,
+      0.005,
+      "%.3f",
+      value => {
+        alignmentStrength = value
+        if (simulation != null) {
+          simulation.alignmentStrength = alignmentStrength
+          changeMade = true
+        }
+      }
+    )
+
+    // Separation strength
+    val separationStrengthSlider = ParameterSlider.forDouble(
+      "Separation",
+      "Separation Strength",
+      separationStrength,
+      0.0,
+      1.0,
+      0.5,
+      0.01,
+      "%.2f",
+      value => {
+        separationStrength = value
+        if (simulation != null) {
+          simulation.separationStrength = separationStrength
+          changeMade = true
+        }
+      }
+    )
+
+    // Separation range
+    val separationRangeSlider = ParameterSlider.forDouble(
       "Separation Range",
-      SliderConfig(5.0, 50.0, separationRange, 5.0, 1.0, "%.1f", "Separation Range"),
+      "Separation Range",
+      separationRange,
+      5.0,
+      50.0,
+      5.0,
+      1.0,
+      "%.1f",
       value => {
         separationRange = value
         if (simulation != null) {
@@ -232,14 +366,152 @@ object GUI extends JFXApp3 {
       }
     )
 
-    Seq(
-      cohesionPane,
-      alignmentPane,
-      separationPane,
-      speedPane,
-      detectionRangePane,
-      separationRangePane
+    // Cursor influence range
+    val cursorInfluenceRangeSlider = ParameterSlider.forDouble(
+      "Cursor Influence Range",
+      "Cursor Influence Range",
+      cursorInfluenceRange,
+      10.0,
+      200.0,
+      20.0,
+      5.0,
+      "%.1f",
+      value => {
+        cursorInfluenceRange = value
+        if (simulation != null) {
+          simulation.cursorInfluenceRange = cursorInfluenceRange
+          changeMade = true
+        }
+      }
     )
+
+    // Cursor influence strength
+    val cursorInfluenceStrengthSlider = ParameterSlider.forDouble(
+      "Cursor Influence Strength",
+      "Cursor Influence Strength",
+      cursorInfluenceStrength,
+      0.0,
+      1.0,
+      0.2,
+      0.05,
+      "%.2f",
+      value => {
+        cursorInfluenceStrength = value
+        if (simulation != null) {
+          simulation.cursorInfluenceStrength = cursorInfluenceStrength
+          changeMade = true
+        }
+      }
+    )
+
+    // Predator count
+    val predatorCountSlider = ParameterSlider.forInt(
+      "Predator Count",
+      "Predator Count",
+      predatorCount,
+      0,
+      10,
+      1,
+      1,
+      value => {
+        predatorCount = value
+        if (simulation != null) {
+          // Update predator count and reinitialize predators
+          simulation.predatorCount = predatorCount
+          simulation.reinitializePredators()
+          changeMade = true
+        }
+      }
+    )
+
+    // Predator hunting range
+    val predatorHuntingRangeSlider = ParameterSlider.forDouble(
+      "Hunting Range",
+      "Predator Hunting Range",
+      predatorHuntingRange,
+      50.0,
+      300.0,
+      50.0,
+      10.0,
+      "%.1f",
+      value => {
+        predatorHuntingRange = value
+        if (simulation != null) {
+          simulation.predatorHuntingRange = predatorHuntingRange
+          simulation.reinitializePredators()
+          changeMade = true
+        }
+      }
+    )
+
+    // Predator speed multiplier
+    val predatorSpeedMultiplierSlider = ParameterSlider.forDouble(
+      "Predator Speed",
+      "Predator Speed Multiplier",
+      predatorSpeedMultiplier,
+      1.0,
+      3.0,
+      0.5,
+      0.1,
+      "%.1f",
+      value => {
+        predatorSpeedMultiplier = value
+        if (simulation != null) {
+          simulation.predatorSpeedMultiplier = predatorSpeedMultiplier
+          simulation.reinitializePredators()
+          changeMade = true
+        }
+      }
+    )
+
+    // Panic speed multiplier
+    val panicSpeedMultiplierSlider = ParameterSlider.forDouble(
+      "Panic Speed",
+      "Panic Speed Multiplier",
+      panicSpeedMultiplier,
+      1.0,
+      3.0,
+      0.5,
+      0.1,
+      "%.1f",
+      value => {
+        panicSpeedMultiplier = value
+        if (simulation != null) {
+          simulation.panicSpeedMultiplier = panicSpeedMultiplier
+          changeMade = true
+        }
+      }
+    )
+
+    // Return all sliders
+    Seq(
+      // Boid parameters
+      boidsCountSlider,
+      boidSizeSlider,
+      detectionRangeSlider,
+      maxForceSlider,
+      maxSpeedSlider,
+      cohesionStrengthSlider,
+      alignmentStrengthSlider,
+      separationStrengthSlider,
+      separationRangeSlider,
+      cursorInfluenceRangeSlider,
+      cursorInfluenceStrengthSlider,
+
+      // Predator parameters
+      predatorCountSlider,
+      predatorHuntingRangeSlider,
+      predatorSpeedMultiplierSlider,
+      panicSpeedMultiplierSlider
+    )
+  }
+
+  private def getSettingPanes: Seq[TitledPane] = {
+    // Create parameter sliders
+    val parameterSliders = defineParameterSliders()
+
+    // Convert parameter sliders to titled panes
+    parameterSliders.map(createParameterControl(_))
   }
 
   private def updateDragVector(newPos: Point2D): Unit = {
@@ -260,7 +532,7 @@ object GUI extends JFXApp3 {
     simulation.allBoids.foreach { boid =>
       val dir = boid.velocity.normalize()
       val perp = Point2D(-dir.y, dir.x)
-      val size = boidSize
+      val size = simulation.boidSize
       val baseWidth = size / 2
 
       val tip = boid.position + dir * size
@@ -274,10 +546,10 @@ object GUI extends JFXApp3 {
         3
       )
     }
-    
+
     gc.fill = Color.Red
     simulation.allPredators.foreach { predator =>
-      val size = boidSize * 1.5 
+      val size = simulation.boidSize * 1.5 
       val dir = predator.velocity.normalize()
       val perp = Point2D(-dir.y, dir.x)
       val baseWidth = size / 2
