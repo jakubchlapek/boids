@@ -22,7 +22,7 @@ class CoreSimulator(
                      var cursorInfluenceRange: Double,
                      var cursorInfluenceStrength: Double,
                      var predatorCount: Int = 2,
-                     var predatorHuntingRange: Double = 150,
+                     var predatorHuntingRange: Double = 50,
                      var predatorSpeedMultiplier: Double = 1.5,
                      var panicSpeedMultiplier: Double = 1.5,
                    ) {
@@ -96,6 +96,7 @@ class CoreSimulator(
   }
 
   def updateSettings(): Unit = {
+    // Update flocking behavior parameters
     flockingBehavior.maxForce = maxForce
     flockingBehavior.cohesionStrength = cohesionStrength
     flockingBehavior.alignmentStrength = alignmentStrength
@@ -103,12 +104,16 @@ class CoreSimulator(
     flockingBehavior.cursorInfluenceRange = cursorInfluenceRange
     flockingBehavior.cursorInfluenceStrength = cursorInfluenceStrength
     flockingBehavior.panicSpeedMultiplier = panicSpeedMultiplier
+
+    // Update spatial manager parameters
     spatialManager.voxelSize = detectionRange
     spatialManager.detectionRange = detectionRange
     spatialManager.separationRange = separationRange
     spatialManager.worldWidth = worldWidth
     spatialManager.worldHeight = worldHeight
     spatialManager.updateRanges()
+
+    // Update predator behavior parameters
     predatorBehavior.maxForce = maxForce
   }
 

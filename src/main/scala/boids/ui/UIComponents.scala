@@ -7,6 +7,41 @@ import scalafx.scene.text.Font
 
 /** reusable UI components */
 object UIComponents {
+  /** creates a category pane containing multiple parameter sliders */
+  def createCategoryPane(title: String, paramSliders: Seq[ParameterSlider[_]]): TitledPane = {
+    val controls = paramSliders.map { slider =>
+      val config = slider.toSliderConfig
+      val updateAction = slider.updateAction(slider.initialValue)
+      val (sliderControl, label) = createParameterSlider(config, updateAction)
+      new VBox(5) {
+        children = Seq(label, sliderControl)
+        padding = Insets(5)
+      }
+    }
+
+    val pane = new TitledPane {
+      text = title
+      content = new VBox(10) {
+        children = controls
+        padding = Insets(5)
+      }
+      expanded = false
+      animated = false
+    }
+
+    // force layout update when expanded/collapsed
+    pane.expandedProperty().addListener((_, _, _) => {
+      // request layout update
+      if (pane.getScene != null) {
+        javafx.application.Platform.runLater(() => {
+          pane.getScene.getWindow.sizeToScene()
+        })
+      }
+    })
+
+    pane
+  }
+
   /** creates a TitledPane from a ParameterSlider */
   def createParameterControl[T](paramSlider: ParameterSlider[T]): TitledPane = {
     val config = paramSlider.toSliderConfig

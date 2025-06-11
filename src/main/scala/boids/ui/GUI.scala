@@ -1,6 +1,6 @@
 package boids.ui
 
-import boids.ui.UIComponents.*
+import boids.ui.UIComponents.{createCategoryPane, createParameterControl}
 import boids.ui.ParameterSlider
 import boids.core.CoreSimulator
 import boids.physics.Point2D
@@ -429,10 +429,10 @@ object GUI extends JFXApp3 {
       "Hunting Range",
       "Predator Hunting Range",
       predatorHuntingRange,
-      50.0,
-      300.0,
-      50.0,
       10.0,
+      100.0,
+      10.0,
+      20.0,
       "%.1f",
       value => {
         predatorHuntingRange = value
@@ -483,9 +483,9 @@ object GUI extends JFXApp3 {
       }
     )
 
-    // Return all sliders
+    // return all sliders
     Seq(
-      // Boid parameters
+      // boid parameters
       boidsCountSlider,
       boidSizeSlider,
       detectionRangeSlider,
@@ -498,7 +498,7 @@ object GUI extends JFXApp3 {
       cursorInfluenceRangeSlider,
       cursorInfluenceStrengthSlider,
 
-      // Predator parameters
+      // predator parameters
       predatorCountSlider,
       predatorHuntingRangeSlider,
       predatorSpeedMultiplierSlider,
@@ -507,11 +507,23 @@ object GUI extends JFXApp3 {
   }
 
   private def getSettingPanes: Seq[TitledPane] = {
-    // Create parameter sliders
+    // create parameter sliders
     val parameterSliders = defineParameterSliders()
 
-    // Convert parameter sliders to titled panes
-    parameterSliders.map(createParameterControl(_))
+    // split sliders into categories
+    val baseEntitySliders = Seq(parameterSliders(1), parameterSliders(3))
+    val boidSliders = Seq(parameterSliders.head, parameterSliders(2), parameterSliders(4))
+    val flockingSliders = parameterSliders.slice(5, 9)
+    val cursorSliders = parameterSliders.slice(9, 11)
+    val predatorSliders = parameterSliders.drop(11)
+
+    Seq(
+      createCategoryPane("Base Entity Config", baseEntitySliders),
+      createCategoryPane("Flocking Config", flockingSliders),
+      createCategoryPane("Boid Config", boidSliders),
+      createCategoryPane("Predator Config", predatorSliders),
+      createCategoryPane("Cursor Config", cursorSliders),
+    )
   }
 
   private def updateDragVector(newPos: Point2D): Unit = {
@@ -569,24 +581,24 @@ object GUI extends JFXApp3 {
       gc.setStroke(Color.LightBlue)
       gc.setLineWidth(1)
       gc.strokeOval(
-        first.position.x - detectionRange,
-        first.position.y - detectionRange,
-        detectionRange * 2,
-        detectionRange * 2
+        first.position.x - simulation.detectionRange,
+        first.position.y - simulation.detectionRange,
+        simulation.detectionRange * 2,
+        simulation.detectionRange * 2
       )
 
       gc.setStroke(Color.Red)
       gc.strokeOval(
-        first.position.x - separationRange,
-        first.position.y - separationRange,
-        separationRange * 2,
-        separationRange * 2
+        first.position.x - simulation.separationRange,
+        first.position.y - simulation.separationRange,
+        simulation.separationRange * 2,
+        simulation.separationRange * 2
       )
     }
   }
 
   private def getColorBySpeed(speed: Double): Color = {
-    val normalizedSpeed = (speed - minSpeed) / (maxSpeed - minSpeed)
+    val normalizedSpeed = (speed - simulation.minSpeed) / (simulation.maxSpeed - simulation.minSpeed)
     val clampedSpeed = math.min(math.max(0.0, normalizedSpeed), 1.0)
 
     if (clampedSpeed < 0.5) {
