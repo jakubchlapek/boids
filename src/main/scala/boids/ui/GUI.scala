@@ -20,16 +20,16 @@ object GUI extends JFXApp3 {
   private val initialWorldWidth: Double = 1200.0
   private val initialWorldHeight: Double = 800.0
 
-  private var boidsCount: Int                 = 1000
-  private var boidSize: Double                = 7.0
-  private var detectionRange: Double          = 30.0
+  private var boidsCount: Int                 = 15000
+  private var boidSize: Double                = 2.0
+  private var detectionRange: Double          = 5.0
   private var maxForce: Double                = 0.7
   private var maxSpeed: Double                = 1.2
   private var minSpeed: Double                = maxSpeed / 5
   private var cohesionStrength: Double        = 0.01
   private var alignmentStrength: Double       = 0.02
   private var separationStrength: Double      = 0.5
-  private var separationRange: Double         = 10.0
+  private var separationRange: Double         = 3.0
   private var cursorInfluenceRange: Double    = 75.0
   private var cursorInfluenceStrength: Double = 0.15
 
@@ -76,7 +76,7 @@ object GUI extends JFXApp3 {
     }
 
     stage = new PrimaryStage {
-      title = "Boids Simulation with Sliders"
+      title = "Boids Sim"
       maximized = true
       minWidth = 550
       minHeight = 400
