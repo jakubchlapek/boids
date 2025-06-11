@@ -1,7 +1,7 @@
 package boids.behavior
 
 import boids.core.{Boid, Predator}
-import boids.physics.Point2D
+import boids.physics.Vector2D
 
 class PredatorBehavior(
                         var maxForce: Double,
@@ -9,21 +9,21 @@ class PredatorBehavior(
                         var wanderStrength: Double
                       ):
   /** force towards nearest boid */
-  def calculateHuntingForce(predator: Predator, target: Boid): Point2D = {
+  def calculateHuntingForce(predator: Predator, target: Boid): Vector2D = {
     val desiredDirection = target.position - predator.position
     desiredDirection.normalize() * maxForce * huntingStrength
   }
 
   /** force when without targets */
-  def calculateWanderForce(predator: Predator): Point2D = {
+  def calculateWanderForce(predator: Predator): Vector2D = {
     // random wandering behavior with slight bias toward current direction
     val randomAngle = math.random() * math.Pi * 0.5 - math.Pi * 0.25
     val currentDirection = if (predator.velocity.magnitude > 0.001)
       predator.velocity.normalize()
     else
-      Point2D(math.random() * 2 - 1, math.random() * 2 - 1).normalize()
+      Vector2D(math.random() * 2 - 1, math.random() * 2 - 1).normalize()
 
-    val wanderForce = Point2D(
+    val wanderForce = Vector2D(
       currentDirection.x * math.cos(randomAngle) - currentDirection.y * math.sin(randomAngle),
       currentDirection.x * math.sin(randomAngle) + currentDirection.y * math.cos(randomAngle)
     )
@@ -31,7 +31,7 @@ class PredatorBehavior(
     wanderForce * wanderStrength
   }
 
-  def calculatePredatorForces(predator: Predator, boids: Seq[Boid]): Point2D = {
+  def calculatePredatorForces(predator: Predator, boids: Seq[Boid]): Vector2D = {
     predator.findTarget(boids) match {
       case Some(target) =>
         calculateHuntingForce(predator, target)

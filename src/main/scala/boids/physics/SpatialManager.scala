@@ -26,8 +26,8 @@ class SpatialManager(
     boids.groupBy(_.voxelCoord)
   }
 
-  /** get VoxelCoord for given Point2D */
-  def getVoxelCoord(point: Point2D): VoxelCoord =
+  /** get VoxelCoord for given Vector2D */
+  def getVoxelCoord(point: Vector2D): VoxelCoord =
     ((point.x / voxelSize).toInt, (point.y / voxelSize).toInt)
 
   /** find all neighbors within detection range in surrounding voxels */
@@ -78,7 +78,7 @@ class SpatialManager(
 
     // if moved
     if (newX != boid.position.x || newY != boid.position.y)
-      boid.position = Point2D(newX, newY)
+      boid.position = Vector2D(newX, newY)
       // update voxel coordinate when position changes due to boundary wrapping
       boid.voxelCoord = getVoxelCoord(boid.position)
 

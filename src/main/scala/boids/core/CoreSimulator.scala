@@ -4,7 +4,7 @@ import boids.core.Boid
 import boids.*
 import boids.behavior.{FlockingBehavior, PredatorBehavior}
 import boids.config.SimulationConfig
-import boids.physics.{Point2D, SpatialManager}
+import boids.physics.{Vector2D, SpatialManager}
 import boids.util.CursorState
 
 class CoreSimulator(var config: SimulationConfig) {
@@ -75,9 +75,9 @@ class CoreSimulator(var config: SimulationConfig) {
   def predatorAvoidanceRange: Double = config.predatorAvoidanceRange
   def predatorAvoidanceRange_=(value: Double): Unit = config = config.withPredatorAvoidanceRange(value)
   private var cursorState = CursorState(None, None, false, false)
-  private var dragVector: Point2D = Point2D(0, 0)
+  private var dragVector: Vector2D = Vector2D(0, 0)
 
-  def setDragVector(vec: Point2D): Unit = {
+  def setDragVector(vec: Vector2D): Unit = {
     dragVector = vec
   }
 
@@ -116,12 +116,12 @@ class CoreSimulator(var config: SimulationConfig) {
       val y = math.random() * worldHeight
       val velX = (math.random() * 2 - 1) * (maxSpeed / 4)
       val velY = (math.random() * 2 - 1) * (maxSpeed / 4)
-      val initialVelocity = Point2D(velX, velY)
+      val initialVelocity = Vector2D(velX, velY)
 
       Boid(
-        position = Point2D(x, y),
+        position = Vector2D(x, y),
         velocity = initialVelocity,
-        voxelCoord = spatialManager.getVoxelCoord(Point2D(x, y))
+        voxelCoord = spatialManager.getVoxelCoord(Vector2D(x, y))
       )
     }
   }
@@ -132,19 +132,19 @@ class CoreSimulator(var config: SimulationConfig) {
       val y = math.random() * worldHeight
       val velX = (math.random() * 2 - 1) * (maxSpeed / 2)
       val velY = (math.random() * 2 - 1) * (maxSpeed / 2)
-      val initialVelocity = Point2D(velX, velY)
+      val initialVelocity = Vector2D(velX, velY)
 
       Predator(
-        position = Point2D(x, y),
+        position = Vector2D(x, y),
         velocity = initialVelocity,
-        voxelCoord = spatialManager.getVoxelCoord(Point2D(x, y)),
+        voxelCoord = spatialManager.getVoxelCoord(Vector2D(x, y)),
         huntingRange = predatorHuntingRange,
         speedMultiplier = predatorSpeedMultiplier
       )
     }
   }
 
-  def updateCursorState(position: Option[Point2D],
+  def updateCursorState(position: Option[Vector2D],
                         leftPressed: Boolean,
                         rightPressed: Boolean): Unit = {
     cursorState = CursorState(position, cursorState.lastPosition, leftPressed, rightPressed)

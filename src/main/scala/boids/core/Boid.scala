@@ -1,20 +1,20 @@
 package boids.core
 
-import boids.physics.{Point2D, VoxelCoord}
+import boids.physics.{Vector2D, VoxelCoord}
 
-class Boid(var position: Point2D,
-                var velocity: Point2D,
-                var voxelCoord: VoxelCoord,
-                var acceleration: Point2D = Point2D(0, 0),
-                var speedMultiplier: Double = 1.0
+class Boid(var position: Vector2D,
+           var velocity: Vector2D,
+           var voxelCoord: VoxelCoord,
+           var acceleration: Vector2D = Vector2D(0, 0),
+           var speedMultiplier: Double = 1.0
           ) extends BaseEntity:
 
-  def applyForce(force: Point2D): Unit =
+  def applyForce(force: Vector2D): Unit =
     acceleration += force
 
   def applyPhysics(maxSpeed: Double, minSpeed: Double): Unit =
     velocity += acceleration
-    acceleration = Point2D(0, 0)
+    acceleration = Vector2D(0, 0)
     velocity = velocity.limit(maxSpeed * speedMultiplier)
 
     val speed = velocity.magnitude
@@ -24,10 +24,10 @@ class Boid(var position: Point2D,
 
 object Boid {
   def apply(
-             position: Point2D,
-             velocity: Point2D,
+             position: Vector2D,
+             velocity: Vector2D,
              voxelCoord: VoxelCoord,
-             acceleration: Point2D = Point2D(0, 0),
+             acceleration: Vector2D = Vector2D(0, 0),
            ): Boid = new Boid(position, velocity, voxelCoord, acceleration)
 
 }

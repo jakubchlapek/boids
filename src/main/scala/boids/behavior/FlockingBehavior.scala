@@ -1,7 +1,7 @@
 package boids.behavior
 
 import boids.core.{Boid, Predator}
-import boids.physics.{Point2D, VoxelCoord}
+import boids.physics.{Vector2D, VoxelCoord}
 
 class FlockingBehavior(
                         var maxForce: Double,
@@ -15,72 +15,72 @@ class FlockingBehavior(
                         var panicSpeedMultiplier: Double,
                       ) {
   /** calculate all flocking forces for a boid and return the combined steering force and isPanicking for boid */
-  def calculateFlockingForces( boid: Boid, 
-                               voxelGrid: Map[VoxelCoord, Seq[Boid]], 
-                               neighbors: Seq[Boid], 
-                               closeNeighbors: Seq[Boid],
-                               predators: Seq[Predator],
-                               cursorPosition: Option[Point2D] = None,
-                               leftMousePressed: Boolean = false,
-                               rightMousePressed: Boolean = false,
-                               dragVector: Point2D = Point2D(0, 0)
-                             ): (Point2D, Boolean) = {
+  def calculateFlockingForces(boid: Boid,
+                              voxelGrid: Map[VoxelCoord, Seq[Boid]],
+                              neighbors: Seq[Boid],
+                              closeNeighbors: Seq[Boid],
+                              predators: Seq[Predator],
+                              cursorPosition: Option[Vector2D] = None,
+                              leftMousePressed: Boolean = false,
+                              rightMousePressed: Boolean = false,
+                              dragVector: Vector2D = Vector2D(0, 0)
+                             ): (Vector2D, Boolean) = {
     if (neighbors.isEmpty && closeNeighbors.isEmpty) {
-      return (Point2D(0, 0), false)
+      return (Vector2D(0, 0), false)
     }
 
     val cohesion = if (neighbors.nonEmpty)
-      calculateCohesionForce(boid, neighbors) else Point2D(0, 0)
+      calculateCohesionForce(boid, neighbors) else Vector2D(0, 0)
     val alignment = if (neighbors.nonEmpty)
-      calculateAlignmentForce(boid, neighbors) else Point2D(0, 0)
+      calculateAlignmentForce(boid, neighbors) else Vector2D(0, 0)
     val separation = if (closeNeighbors.nonEmpty)
-      calculateSeparationForce(boid, closeNeighbors) else Point2D(0, 0)
+      calculateSeparationForce(boid, closeNeighbors) else Vector2D(0, 0)
     val cursor = if (leftMousePressed || rightMousePressed)
-      calculateCursorForce(boid, cursorPosition, leftMousePressed, rightMousePressed, dragVector) else Point2D(0, 0)
+      calculateCursorForce(boid, cursorPosition, leftMousePressed, rightMousePressed, dragVector) else Vector2D(0, 0)
     val (predatorAvoidance, isPanicking) = calculatePredatorAvoidanceForce(boid, predators)
 
     (cohesion + alignment + separation + cursor + predatorAvoidance, isPanicking)
   }
 
   /** calculate cohesion force - attraction to center of mass */
-  private def calculateCohesionForce(boid: Boid, neighbors: Seq[Boid]): Point2D = {
-    val centerOfMass = neighbors.map(_.position).foldLeft(Point2D(0, 0))(_ + _) / neighbors.size.toDouble
+  private def calculateCohesionForce(boid: Boid, neighbors: Seq[Boid]): Vector2D = {
+    val centerOfMass = neighbors.map(_.position).foldLeft(Vector2D(0, 0))(_ + _) / neighbors.size.toDouble
     val desiredVector = centerOfMass - boid.position
     desiredVector.limit(maxForce) * cohesionStrength
   }
 
   /** calculate alignment force - match velocity with neighbors */
-  private def calculateAlignmentForce(boid: Boid, neighbors: Seq[Boid]): Point2D = {
-    if (neighbors.isEmpty) return Point2D(0, 0)
+  private def calculateAlignmentForce(boid: Boid, neighbors: Seq[Boid]): Vector2D = {
+    if (neighbors.isEmpty) return Vector2D(0, 0)
 
-    val averageVelocity = neighbors.map(_.velocity).foldLeft(Point2D(0, 0))(_ + _) / neighbors.size
+    val averageVelocity = neighbors.map(_.velocity).foldLeft(Vector2D(0, 0))(_ + _) / neighbors.size
     val desiredVector = averageVelocity - boid.velocity
     desiredVector.limit(maxForce) * alignmentStrength
   }
 
   /** calculate separation force - avoid close neighbors */
-  private def calculateSeparationForce(boid: Boid, closeNeighbors: Seq[Boid]): Point2D = {
-    if (closeNeighbors.isEmpty) return Point2D(0, 0)
+  private def calculateSeparationForce(boid: Boid, closeNeighbors: Seq[Boid]): Vector2D = {
+    if (closeNeighbors.isEmpty) return Vector2D(0, 0)
 
     val repulsionVector = closeNeighbors
       .map { neighbor =>
         val diff = boid.position - neighbor.position
         val distance = diff.magnitude
-        if (distance > 0) diff / (distance * distance) else Point2D(0, 0)
+        if (distance > 0) diff / (distance * distance) else Vector2D(0, 0)
         // 1/d² creates stronger force for closer neighbors
       }
-      .foldLeft(Point2D(0, 0))(_ + _) / closeNeighbors.size
+      .foldLeft(Vector2D(0, 0))(_ + _) / closeNeighbors.size
 
     repulsionVector.limit(maxForce) * separationStrength
   }
 
   private def calculateCursorForce(
                                     boid: Boid,
-                                    cursorPosition: Option[Point2D],
+                                    cursorPosition: Option[Vector2D],
                                     leftPressed: Boolean,
                                     rightPressed: Boolean,
-                                    dragVector: Point2D
-                                  ): Point2D = {
+                                    dragVector: Vector2D
+                                  ): Vector2D = {
     cursorPosition.flatMap { pos =>
       val toCursor = boid.position - pos
       val distance = toCursor.magnitude
@@ -100,16 +100,16 @@ class FlockingBehavior(
           Some(scaledDrag)
 
         } else {
-          Some(Point2D(0, 0))
+          Some(Vector2D(0, 0))
         }
       } else {
-        Some(Point2D(0, 0))
+        Some(Vector2D(0, 0))
       }
-    }.getOrElse(Point2D(0, 0))
+    }.getOrElse(Vector2D(0, 0))
   }
 
-  def calculatePredatorAvoidanceForce(boid: Boid, predators: Seq[Predator]): (Point2D, Boolean) = {
-    if (predators.isEmpty) return (Point2D(0, 0), false)
+  def calculatePredatorAvoidanceForce(boid: Boid, predators: Seq[Predator]): (Vector2D, Boolean) = {
+    if (predators.isEmpty) return (Vector2D(0, 0), false)
 
     var isPanicking = false
     val avoidanceForces = predators.map { predator =>
@@ -124,12 +124,12 @@ class FlockingBehavior(
         val avoidStrength = 1.0 - (distance / predatorAvoidanceRange)
         toPredator.normalize() * avoidStrength * avoidStrength * predatorAvoidanceStrength
       } else {
-        Point2D(0, 0)
+        Vector2D(0, 0)
       }
     }
 
     // Use foldLeft instead of reduce to handle empty collections safely
-    val combinedForce = avoidanceForces.foldLeft(Point2D(0, 0))(_ + _)
+    val combinedForce = avoidanceForces.foldLeft(Vector2D(0, 0))(_ + _)
     (combinedForce, isPanicking)
   }
 

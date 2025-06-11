@@ -2,15 +2,15 @@ package boids.core
 
 import boids.core.Boid
 import boids.core.Predator
-import boids.physics.{Point2D, VoxelCoord}
+import boids.physics.{Vector2D, VoxelCoord}
 
 class Predator(
-                position: Point2D,
-                velocity: Point2D,
+                position: Vector2D,
+                velocity: Vector2D,
                 voxelCoord: VoxelCoord,
-                acceleration: Point2D = Point2D(0, 0),
-                var huntingRange: Double,  // range for targeting boids
-                speedMultiplier: Double  // predators move faster
+                acceleration: Vector2D = Vector2D(0, 0),
+                var huntingRange: Double, // range for targeting boids
+                speedMultiplier: Double // predators move faster
               ) extends Boid(position, velocity, voxelCoord, acceleration, speedMultiplier):
 
   def findTarget(boids: Seq[Boid]): Option[Boid] = {
@@ -28,10 +28,10 @@ class Predator(
 
 object Predator {
   def apply(
-             position: Point2D,
-             velocity: Point2D,
+             position: Vector2D,
+             velocity: Vector2D,
              voxelCoord: VoxelCoord,
-             acceleration: Point2D = Point2D(0, 0),
+             acceleration: Vector2D = Vector2D(0, 0),
              huntingRange: Double,
              speedMultiplier: Double
            ): Predator = new Predator(

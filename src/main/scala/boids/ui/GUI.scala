@@ -4,7 +4,7 @@ import boids.ui.UIComponents.{createCategoryPane, createParameterControl}
 import boids.ui.ParameterSlider
 import boids.config.SimulationConfig
 import boids.core.CoreSimulator
-import boids.physics.Point2D
+import boids.physics.Vector2D
 import boids.util.CursorState
 import scalafx.Includes.jfxMouseEvent2sfx
 import scalafx.animation.AnimationTimer
@@ -65,8 +65,8 @@ object GUI extends JFXApp3 {
     val canvas = new Canvas(initialWorldWidth, initialWorldHeight)
     val gc     = canvas.graphicsContext2D
 
-    canvas.onMouseMoved = e => updateDragVector(Point2D(e.x, e.y))
-    canvas.onMouseDragged = e => updateDragVector(Point2D(e.x, e.y))
+    canvas.onMouseMoved = e => updateDragVector(Vector2D(e.x, e.y))
+    canvas.onMouseDragged = e => updateDragVector(Vector2D(e.x, e.y))
     canvas.onMouseExited = _ =>
       cursorState = cursorState.copy(position = None, lastPosition = None)
 
@@ -607,13 +607,13 @@ object GUI extends JFXApp3 {
     )
   }
 
-  private def updateDragVector(newPos: Point2D): Unit = {
+  private def updateDragVector(newPos: Vector2D): Unit = {
     cursorState.lastPosition match {
       case Some(last) if cursorState.leftPressed || cursorState.rightPressed =>
         val dragVector = newPos - last
         simulation.setDragVector(dragVector)
       case _ =>
-        simulation.setDragVector(Point2D(0, 0))
+        simulation.setDragVector(Vector2D(0, 0))
     }
     cursorState = cursorState.copy(position = Some(newPos), lastPosition = Some(newPos))
   }
@@ -623,7 +623,7 @@ object GUI extends JFXApp3 {
 
     simulation.allBoids.foreach { boid =>
       val dir = boid.velocity.normalize()
-      val perp = Point2D(-dir.y, dir.x)
+      val perp = Vector2D(-dir.y, dir.x)
       val size = simulation.boidSize
       val baseWidth = size / 2
 
@@ -643,7 +643,7 @@ object GUI extends JFXApp3 {
     simulation.allPredators.foreach { predator =>
       val size = simulation.boidSize * 1.5 
       val dir = predator.velocity.normalize()
-      val perp = Point2D(-dir.y, dir.x)
+      val perp = Vector2D(-dir.y, dir.x)
       val baseWidth = size / 2
 
       val tip = predator.position + dir * size

@@ -1,11 +1,11 @@
 package boids.core
 
-import boids.physics.{Point2D, VoxelCoord}
+import boids.physics.{Vector2D, VoxelCoord}
 
 trait BaseEntity {
-  def position: Point2D
-  def velocity: Point2D
+  def position: Vector2D
+  def velocity: Vector2D
   def voxelCoord: VoxelCoord
-  def applyForce(force: Point2D): Unit
+  def applyForce(force: Vector2D): Unit
   def applyPhysics(maxSpeed: Double, minSpeed: Double): Unit
 }
