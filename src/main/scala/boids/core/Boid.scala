@@ -6,7 +6,7 @@ class Boid(var position: Point2D,
                 var velocity: Point2D,
                 var voxelCoord: VoxelCoord,
                 var acceleration: Point2D = Point2D(0, 0),
-                val speedMultiplier: Double = 1.0
+                var speedMultiplier: Double = 1.0
           ) extends BaseEntity:
 
   def applyForce(force: Point2D): Unit =
@@ -16,7 +16,7 @@ class Boid(var position: Point2D,
     velocity += acceleration
     acceleration = Point2D(0, 0)
     velocity = velocity.limit(maxSpeed * speedMultiplier)
-    
+
     val speed = velocity.magnitude
     if (speed < minSpeed && speed > 0.0001) {
       velocity = velocity.normalize() * minSpeed

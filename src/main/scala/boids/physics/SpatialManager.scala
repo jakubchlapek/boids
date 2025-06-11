@@ -21,31 +21,31 @@ class SpatialManager(
     separationRangeSquared = separationRange * separationRange
   }
 
-  /** group boids by voxelCoord*/
+  /** group boids by VoxelCoord */
   def buildGrid(boids: Seq[Boid]): Map[VoxelCoord, Seq[Boid]] = {
     boids.groupBy(_.voxelCoord)
   }
-  
-  /** get voxelCoord for given Point2D */
+
+  /** get VoxelCoord for given Point2D */
   def getVoxelCoord(point: Point2D): VoxelCoord =
     ((point.x / voxelSize).toInt, (point.y / voxelSize).toInt)
-  
+
   /** find all neighbors within detection range in surrounding voxels */
   def findNeighbors(boid: Boid, voxelGrid: Map[VoxelCoord, Seq[Boid]]): Seq[Boid] = {
     val (voxelX, voxelY) = boid.voxelCoord
-  
+
     // checking surrounding cells
     val nearbyBoids = for {
       dx <- -1 to 1
       dy <- -1 to 1
       neighbors <- voxelGrid.get((voxelX + dx, voxelY + dy)).toSeq
     } yield neighbors
-  
+
     nearbyBoids.flatten.filter(other =>
       other != boid && other.position.distanceSquared(boid.position) < detectionRangeSquared
     )
   }
-  
+
   /** find neighbors that are too close */
   def findCloseNeighbors(boid: Boid, neighbors: Seq[Boid]): Seq[Boid] = {
     neighbors.filter(
@@ -53,7 +53,7 @@ class SpatialManager(
     )
   }
 
-  /** Moves a boid based on its velocity */
+  /** moves a boid based on its velocity */
   def moveBoid(boid: Boid): Unit =
     val newPosition = boid.position + boid.velocity
     boid.position = newPosition
@@ -63,7 +63,7 @@ class SpatialManager(
     if (newVoxelCoord != boid.voxelCoord)
       boid.voxelCoord = newVoxelCoord
 
-  /** Constrains boids to world boundaries using wrap-around behavior */
+  /** constrains boids to world boundaries using wrap-around behavior */
   def constrainToBoundaries(boid: Boid): Unit =
     var newX = boid.position.x
     var newY = boid.position.y

@@ -9,8 +9,8 @@ class Predator(
                 velocity: Point2D,
                 voxelCoord: VoxelCoord,
                 acceleration: Point2D = Point2D(0, 0),
-                val huntingRange: Double = 50,  // range for targeting boids
-                speedMultiplier: Double = 1.5  // predators move faster
+                var huntingRange: Double,  // range for targeting boids
+                speedMultiplier: Double  // predators move faster
               ) extends Boid(position, velocity, voxelCoord, acceleration, speedMultiplier):
 
   def findTarget(boids: Seq[Boid]): Option[Boid] = {
@@ -32,8 +32,8 @@ object Predator {
              velocity: Point2D,
              voxelCoord: VoxelCoord,
              acceleration: Point2D = Point2D(0, 0),
-             huntingRange: Double = 50,
-             speedMultiplier: Double = 1.5
+             huntingRange: Double,
+             speedMultiplier: Double
            ): Predator = new Predator(
     position, velocity, voxelCoord, acceleration, huntingRange, speedMultiplier
   )

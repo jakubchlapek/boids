@@ -2,6 +2,7 @@ package boids.ui
 
 import boids.ui.UIComponents.{createCategoryPane, createParameterControl}
 import boids.ui.ParameterSlider
+import boids.config.SimulationConfig
 import boids.core.CoreSimulator
 import boids.physics.Point2D
 import scalafx.Includes.jfxMouseEvent2sfx
@@ -18,28 +19,42 @@ import scalafx.scene.paint.Color
 import scalafx.scene.text.Font
 
 object GUI extends JFXApp3 {
-  private val initialWorldWidth: Double = 1200.0
-  private val initialWorldHeight: Double = 800.0
+  // use default config for initial values
+  private val defaultConfig = SimulationConfig.default
 
-  // Boid parameters
-  private var boidsCount: Int                 = 1000
-  private var boidSize: Double                = 4.0
-  private var detectionRange: Double          = 25.0
-  private var maxForce: Double                = 0.7
-  private var maxSpeed: Double                = 1.2
-  private var minSpeed: Double                = maxSpeed / 5
-  private var cohesionStrength: Double        = 0.01
-  private var alignmentStrength: Double       = 0.02
-  private var separationStrength: Double      = 0.5
-  private var separationRange: Double         = 15.0
-  private var cursorInfluenceRange: Double    = 75.0
-  private var cursorInfluenceStrength: Double = 0.15
+  // world dimensions
+  private val initialWorldWidth: Double = defaultConfig.worldWidth
+  private val initialWorldHeight: Double = defaultConfig.worldHeight
 
-  // Predator parameters
-  private var predatorCount: Int              = 2
-  private var predatorHuntingRange: Double    = 150.0
-  private var predatorSpeedMultiplier: Double = 1.5
-  private var panicSpeedMultiplier: Double    = 1.5
+  // base entity parameters
+  private var boidSize: Double                = defaultConfig.boidSize
+  private var maxForce: Double                = defaultConfig.maxForce
+
+  // boid parameters
+  private var boidsCount: Int                 = defaultConfig.boidsCount
+  private var detectionRange: Double          = defaultConfig.detectionRange
+  private var maxSpeed: Double                = defaultConfig.maxSpeed
+  private var minSpeed: Double                = defaultConfig.minSpeed
+  private var panicSpeedMultiplier: Double    = defaultConfig.panicSpeedMultiplier
+
+  // flocking behavior parameters
+  private var cohesionStrength: Double        = defaultConfig.cohesionStrength
+  private var alignmentStrength: Double       = defaultConfig.alignmentStrength
+  private var separationStrength: Double      = defaultConfig.separationStrength
+  private var separationRange: Double         = defaultConfig.separationRange
+  private var predatorAvoidanceRange: Double  = defaultConfig.predatorAvoidanceRange
+
+  // cursor interaction parameters
+  private var cursorInfluenceRange: Double    = defaultConfig.cursorInfluenceRange
+  private var cursorInfluenceStrength: Double = defaultConfig.cursorInfluenceStrength
+
+  // predator parameters
+  private var predatorCount: Int              = defaultConfig.predatorCount
+  private var predatorHuntingRange: Double    = defaultConfig.predatorHuntingRange
+  private var predatorSpeedMultiplier: Double = defaultConfig.predatorSpeedMultiplier
+  private var huntingStrength: Double         = defaultConfig.huntingStrength
+  private var wanderStrength: Double          = defaultConfig.wanderStrength
+  private var avoidanceStrength: Double       = defaultConfig.avoidanceStrength
 
   private var leftMousePressed: Boolean       = false
   private var rightMousePressed: Boolean      = false
@@ -114,26 +129,14 @@ object GUI extends JFXApp3 {
       }
     }
 
-    simulation = new CoreSimulator(
-      canvas.width.value,
-      canvas.height.value,
-      boidsCount,
-      boidSize,
-      detectionRange,
-      maxForce,
-      maxSpeed,
-      minSpeed,
-      cohesionStrength,
-      alignmentStrength,
-      separationStrength,
-      separationRange,
-      cursorInfluenceRange,
-      cursorInfluenceStrength,
-      predatorCount,
-      predatorHuntingRange,
-      predatorSpeedMultiplier,
-      panicSpeedMultiplier
+    // create a simulation config based on default with current canvas dimensions
+    val simulationConfig = defaultConfig.withWorldDimensions(
+      canvas.width.value, 
+      canvas.height.value
     )
+
+    // Create the simulator with the config
+    simulation = new CoreSimulator(simulationConfig)
 
     def updateCanvasSize(): Unit = {
       val sceneWidth = stage.width.value
@@ -483,6 +486,82 @@ object GUI extends JFXApp3 {
       }
     )
 
+    // Hunting strength
+    val huntingStrengthSlider = ParameterSlider.forDouble(
+      "Hunting Strength",
+      "Predator Hunting Strength",
+      huntingStrength,
+      0.1,
+      3.0,
+      0.2,
+      0.1,
+      "%.1f",
+      value => {
+        huntingStrength = value
+        if (simulation != null) {
+          simulation.huntingStrength = huntingStrength
+          changeMade = true
+        }
+      }
+    )
+
+    // Wander strength
+    val wanderStrengthSlider = ParameterSlider.forDouble(
+      "Wander Strength",
+      "Predator Wander Strength",
+      wanderStrength,
+      0.1,
+      2.0,
+      0.1,
+      0.1,
+      "%.1f",
+      value => {
+        wanderStrength = value
+        if (simulation != null) {
+          simulation.wanderStrength = wanderStrength
+          changeMade = true
+        }
+      }
+    )
+
+    // Predator avoidance strength
+    val avoidanceStrengthSlider = ParameterSlider.forDouble(
+      "Predator Avoidance",
+      "Predator Avoidance Strength",
+      avoidanceStrength,
+      0.1,
+      3.0,
+      0.2,
+      0.1,
+      "%.1f",
+      value => {
+        avoidanceStrength = value
+        if (simulation != null) {
+          simulation.avoidanceStrength = avoidanceStrength
+          changeMade = true
+        }
+      }
+    )
+
+    // Predator avoidance range
+    val predatorAvoidanceRangeSlider = ParameterSlider.forDouble(
+      "Avoidance Range",
+      "Predator Avoidance Range",
+      predatorAvoidanceRange,
+      50.0,
+      300.0,
+      50.0,
+      10.0,
+      "%.1f",
+      value => {
+        predatorAvoidanceRange = value
+        if (simulation != null) {
+          simulation.predatorAvoidanceRange = predatorAvoidanceRange
+          changeMade = true
+        }
+      }
+    )
+
     // return all sliders
     Seq(
       // boid parameters
@@ -491,10 +570,13 @@ object GUI extends JFXApp3 {
       detectionRangeSlider,
       maxForceSlider,
       maxSpeedSlider,
+      panicSpeedMultiplierSlider,
       cohesionStrengthSlider,
       alignmentStrengthSlider,
       separationStrengthSlider,
       separationRangeSlider,
+      avoidanceStrengthSlider,
+      predatorAvoidanceRangeSlider,
       cursorInfluenceRangeSlider,
       cursorInfluenceStrengthSlider,
 
@@ -502,7 +584,8 @@ object GUI extends JFXApp3 {
       predatorCountSlider,
       predatorHuntingRangeSlider,
       predatorSpeedMultiplierSlider,
-      panicSpeedMultiplierSlider
+      huntingStrengthSlider,
+      wanderStrengthSlider
     )
   }
 
@@ -512,16 +595,16 @@ object GUI extends JFXApp3 {
 
     // split sliders into categories
     val baseEntitySliders = Seq(parameterSliders(1), parameterSliders(3))
-    val boidSliders = Seq(parameterSliders.head, parameterSliders(2), parameterSliders(4))
-    val flockingSliders = parameterSliders.slice(5, 9)
-    val cursorSliders = parameterSliders.slice(9, 11)
-    val predatorSliders = parameterSliders.drop(11)
+    val boidSliders = Seq(parameterSliders.head, parameterSliders(2), parameterSliders(4), parameterSliders(5))
+    val flockingSliders = parameterSliders.slice(6, 12)
+    val cursorSliders = parameterSliders.slice(12, 14)
+    val predatorSliders = parameterSliders.slice(14, 19)
 
     Seq(
       createCategoryPane("Base Entity Config", baseEntitySliders),
-      createCategoryPane("Flocking Config", flockingSliders),
       createCategoryPane("Boid Config", boidSliders),
       createCategoryPane("Predator Config", predatorSliders),
+      createCategoryPane("Flocking Config", flockingSliders),
       createCategoryPane("Cursor Config", cursorSliders),
     )
   }

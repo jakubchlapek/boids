@@ -9,10 +9,10 @@ class FlockingBehavior(
                         var alignmentStrength: Double,
                         var separationStrength: Double,
                         var cursorInfluenceRange: Double,
-                        var cursorInfluenceStrength: Double = 100,
-                        var predatorAvoidanceStrength: Double = 2.0,
-                        var predatorAvoidanceRange: Double = 200.0,
-                        var panicSpeedMultiplier: Double = 1.5,
+                        var cursorInfluenceStrength: Double,
+                        var predatorAvoidanceStrength: Double,
+                        var predatorAvoidanceRange: Double,
+                        var panicSpeedMultiplier: Double,
                       ) {
   /** calculate all flocking forces for a boid and return the combined steering force and isPanicking for boid */
   def calculateFlockingForces( boid: Boid, 
@@ -51,13 +51,17 @@ class FlockingBehavior(
 
   /** calculate alignment force - match velocity with neighbors */
   private def calculateAlignmentForce(boid: Boid, neighbors: Seq[Boid]): Point2D = {
-    val averageVelocity = neighbors.map(_.velocity).reduce(_ + _) / neighbors.size
+    if (neighbors.isEmpty) return Point2D(0, 0)
+
+    val averageVelocity = neighbors.map(_.velocity).foldLeft(Point2D(0, 0))(_ + _) / neighbors.size
     val desiredVector = averageVelocity - boid.velocity
     desiredVector.limit(maxForce) * alignmentStrength
   }
 
   /** calculate separation force - avoid close neighbors */
   private def calculateSeparationForce(boid: Boid, closeNeighbors: Seq[Boid]): Point2D = {
+    if (closeNeighbors.isEmpty) return Point2D(0, 0)
+
     val repulsionVector = closeNeighbors
       .map { neighbor =>
         val diff = boid.position - neighbor.position
@@ -65,7 +69,7 @@ class FlockingBehavior(
         if (distance > 0) diff / (distance * distance) else Point2D(0, 0)
         // 1/d² creates stronger force for closer neighbors
       }
-      .reduce(_ + _) / closeNeighbors.size
+      .foldLeft(Point2D(0, 0))(_ + _) / closeNeighbors.size
 
     repulsionVector.limit(maxForce) * separationStrength
   }
@@ -124,7 +128,9 @@ class FlockingBehavior(
       }
     }
 
-    (avoidanceForces.reduce(_ + _), isPanicking)
+    // Use foldLeft instead of reduce to handle empty collections safely
+    val combinedForce = avoidanceForces.foldLeft(Point2D(0, 0))(_ + _)
+    (combinedForce, isPanicking)
   }
 
 }

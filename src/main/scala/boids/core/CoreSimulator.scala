@@ -3,29 +3,77 @@ package boids.core
 import boids.core.Boid
 import boids.*
 import boids.behavior.{FlockingBehavior, PredatorBehavior}
+import boids.config.SimulationConfig
 import boids.physics.{Point2D, SpatialManager}
 import boids.util.CursorState
 
-class CoreSimulator(
-                     var worldWidth: Double,
-                     var worldHeight: Double,
-                     var boidsCount: Int,
-                     var boidSize: Double,
-                     var detectionRange: Double,
-                     var maxForce: Double,
-                     var maxSpeed: Double,
-                     var minSpeed: Double,
-                     var cohesionStrength: Double,
-                     var alignmentStrength: Double,
-                     var separationStrength: Double,
-                     var separationRange: Double,
-                     var cursorInfluenceRange: Double,
-                     var cursorInfluenceStrength: Double,
-                     var predatorCount: Int = 2,
-                     var predatorHuntingRange: Double = 50,
-                     var predatorSpeedMultiplier: Double = 1.5,
-                     var panicSpeedMultiplier: Double = 1.5,
-                   ) {
+class CoreSimulator(var config: SimulationConfig) {
+  // Delegate properties to config
+  def worldWidth: Double = config.worldWidth
+  def worldWidth_=(value: Double): Unit = config = config.withWorldWidth(value)
+
+  def worldHeight: Double = config.worldHeight
+  def worldHeight_=(value: Double): Unit = config = config.withWorldHeight(value)
+
+  def boidsCount: Int = config.boidsCount
+  def boidsCount_=(value: Int): Unit = config = config.withBoidsCount(value)
+
+  def boidSize: Double = config.boidSize
+  def boidSize_=(value: Double): Unit = config = config.withBoidSize(value)
+
+  def detectionRange: Double = config.detectionRange
+  def detectionRange_=(value: Double): Unit = config = config.withDetectionRange(value)
+
+  def maxForce: Double = config.maxForce
+  def maxForce_=(value: Double): Unit = config = config.withMaxForce(value)
+
+  def maxSpeed: Double = config.maxSpeed
+  def maxSpeed_=(value: Double): Unit = config = config.withMaxSpeed(value)
+
+  def minSpeed: Double = config.minSpeed
+  def minSpeed_=(value: Double): Unit = config = config.withMinSpeed(value)
+
+  def cohesionStrength: Double = config.cohesionStrength
+  def cohesionStrength_=(value: Double): Unit = config = config.withCohesionStrength(value)
+
+  def alignmentStrength: Double = config.alignmentStrength
+  def alignmentStrength_=(value: Double): Unit = config = config.withAlignmentStrength(value)
+
+  def separationStrength: Double = config.separationStrength
+  def separationStrength_=(value: Double): Unit = config = config.withSeparationStrength(value)
+
+  def separationRange: Double = config.separationRange
+  def separationRange_=(value: Double): Unit = config = config.withSeparationRange(value)
+
+  def cursorInfluenceRange: Double = config.cursorInfluenceRange
+  def cursorInfluenceRange_=(value: Double): Unit = config = config.withCursorInfluenceRange(value)
+
+  def cursorInfluenceStrength: Double = config.cursorInfluenceStrength
+  def cursorInfluenceStrength_=(value: Double): Unit = config = config.withCursorInfluenceStrength(value)
+
+  def predatorCount: Int = config.predatorCount
+  def predatorCount_=(value: Int): Unit = config = config.withPredatorCount(value)
+
+  def predatorHuntingRange: Double = config.predatorHuntingRange
+  def predatorHuntingRange_=(value: Double): Unit = config = config.withPredatorHuntingRange(value)
+
+  def predatorSpeedMultiplier: Double = config.predatorSpeedMultiplier
+  def predatorSpeedMultiplier_=(value: Double): Unit = config = config.withPredatorSpeedMultiplier(value)
+
+  def panicSpeedMultiplier: Double = config.panicSpeedMultiplier
+  def panicSpeedMultiplier_=(value: Double): Unit = config = config.withPanicSpeedMultiplier(value)
+
+  def huntingStrength: Double = config.huntingStrength
+  def huntingStrength_=(value: Double): Unit = config = config.withHuntingStrength(value)
+
+  def wanderStrength: Double = config.wanderStrength
+  def wanderStrength_=(value: Double): Unit = config = config.withWanderStrength(value)
+
+  def avoidanceStrength: Double = config.avoidanceStrength
+  def avoidanceStrength_=(value: Double): Unit = config = config.withAvoidanceStrength(value)
+
+  def predatorAvoidanceRange: Double = config.predatorAvoidanceRange
+  def predatorAvoidanceRange_=(value: Double): Unit = config = config.withPredatorAvoidanceRange(value)
   private var cursorState = CursorState(None, false, false)
   private var dragVector: Point2D = Point2D(0, 0)
 
@@ -39,10 +87,17 @@ class CoreSimulator(
     alignmentStrength = alignmentStrength,
     separationStrength = separationStrength,
     cursorInfluenceRange = cursorInfluenceRange,
-    cursorInfluenceStrength = cursorInfluenceStrength
+    cursorInfluenceStrength = cursorInfluenceStrength,
+    predatorAvoidanceStrength = avoidanceStrength,
+    predatorAvoidanceRange = predatorAvoidanceRange,
+    panicSpeedMultiplier = panicSpeedMultiplier
   )
 
-  private val predatorBehavior: PredatorBehavior = new PredatorBehavior()
+  private val predatorBehavior: PredatorBehavior = new PredatorBehavior(
+    maxForce = maxForce,
+    huntingStrength = huntingStrength,
+    wanderStrength = wanderStrength
+  )
 
   private val spatialManager: SpatialManager = new SpatialManager(
     voxelSize = detectionRange,
@@ -104,6 +159,8 @@ class CoreSimulator(
     flockingBehavior.cursorInfluenceRange = cursorInfluenceRange
     flockingBehavior.cursorInfluenceStrength = cursorInfluenceStrength
     flockingBehavior.panicSpeedMultiplier = panicSpeedMultiplier
+    flockingBehavior.predatorAvoidanceStrength = avoidanceStrength
+    flockingBehavior.predatorAvoidanceRange = predatorAvoidanceRange
 
     // Update spatial manager parameters
     spatialManager.voxelSize = detectionRange
@@ -115,6 +172,14 @@ class CoreSimulator(
 
     // Update predator behavior parameters
     predatorBehavior.maxForce = maxForce
+    predatorBehavior.huntingStrength = huntingStrength
+    predatorBehavior.wanderStrength = wanderStrength
+
+    // Update predator parameters
+    allPredators.foreach { predator =>
+      predator.speedMultiplier = predatorSpeedMultiplier
+      predator.huntingRange = predatorHuntingRange
+    }
   }
 
   /** reinitialize boids with current settings */

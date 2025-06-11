@@ -4,9 +4,9 @@ import boids.core.{Boid, Predator}
 import boids.physics.Point2D
 
 class PredatorBehavior(
-                        var maxForce: Double = 1.0,
-                        var huntingStrength: Double = 1.2,
-                        var wanderStrength: Double = 0.5
+                        var maxForce: Double,
+                        var huntingStrength: Double,
+                        var wanderStrength: Double
                       ):
   /** force towards nearest boid */
   def calculateHuntingForce(predator: Predator, target: Boid): Point2D = {
