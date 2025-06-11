@@ -74,7 +74,7 @@ class CoreSimulator(var config: SimulationConfig) {
 
   def predatorAvoidanceRange: Double = config.predatorAvoidanceRange
   def predatorAvoidanceRange_=(value: Double): Unit = config = config.withPredatorAvoidanceRange(value)
-  private var cursorState = CursorState(None, false, false)
+  private var cursorState = CursorState(None, None, false, false)
   private var dragVector: Point2D = Point2D(0, 0)
 
   def setDragVector(vec: Point2D): Unit = {
@@ -147,7 +147,7 @@ class CoreSimulator(var config: SimulationConfig) {
   def updateCursorState(position: Option[Point2D],
                         leftPressed: Boolean,
                         rightPressed: Boolean): Unit = {
-    cursorState = CursorState(position, leftPressed, rightPressed)
+    cursorState = CursorState(position, cursorState.lastPosition, leftPressed, rightPressed)
   }
 
   def updateSettings(): Unit = {

@@ -5,6 +5,7 @@ import boids.ui.ParameterSlider
 import boids.config.SimulationConfig
 import boids.core.CoreSimulator
 import boids.physics.Point2D
+import boids.util.CursorState
 import scalafx.Includes.jfxMouseEvent2sfx
 import scalafx.animation.AnimationTimer
 import scalafx.application.JFXApp3
@@ -56,10 +57,7 @@ object GUI extends JFXApp3 {
   private var wanderStrength: Double          = defaultConfig.wanderStrength
   private var avoidanceStrength: Double       = defaultConfig.avoidanceStrength
 
-  private var leftMousePressed: Boolean       = false
-  private var rightMousePressed: Boolean      = false
-  private var lastCursorPosition: Option[Point2D] = None
-  private var cursorPosition: Option[Point2D]     = None
+  private var cursorState: CursorState = CursorState(None, None, false, false)
   var changeMade = false
   private var simulation: CoreSimulator = _
 
@@ -70,18 +68,18 @@ object GUI extends JFXApp3 {
     canvas.onMouseMoved = e => updateDragVector(Point2D(e.x, e.y))
     canvas.onMouseDragged = e => updateDragVector(Point2D(e.x, e.y))
     canvas.onMouseExited = _ =>
-      cursorPosition = None
+      cursorState = cursorState.copy(position = None, lastPosition = None)
 
     canvas.onMousePressed = e =>
       e.button match {
-        case MouseButton.Primary   => leftMousePressed = true
-        case MouseButton.Secondary => rightMousePressed = true
+        case MouseButton.Primary   => cursorState = cursorState.copy(leftPressed = true)
+        case MouseButton.Secondary => cursorState = cursorState.copy(rightPressed = true)
         case _                     =>
       }
     canvas.onMouseReleased = e =>
       e.button match {
-        case MouseButton.Primary   => leftMousePressed = false
-        case MouseButton.Secondary => rightMousePressed = false
+        case MouseButton.Primary   => cursorState = cursorState.copy(leftPressed = false)
+        case MouseButton.Secondary => cursorState = cursorState.copy(rightPressed = false)
         case _                     =>
       }
 
@@ -183,7 +181,7 @@ object GUI extends JFXApp3 {
     }
 
     val timer = AnimationTimer { _ =>
-      simulation.updateCursorState(cursorPosition, leftMousePressed, rightMousePressed)
+      simulation.updateCursorState(cursorState.position, cursorState.leftPressed, cursorState.rightPressed)
       simulation.update(changeMade)
       changeMade = false
       renderBoids(gc)
@@ -610,15 +608,14 @@ object GUI extends JFXApp3 {
   }
 
   private def updateDragVector(newPos: Point2D): Unit = {
-    lastCursorPosition match {
-      case Some(last) if leftMousePressed || rightMousePressed =>
+    cursorState.lastPosition match {
+      case Some(last) if cursorState.leftPressed || cursorState.rightPressed =>
         val dragVector = newPos - last
         simulation.setDragVector(dragVector)
       case _ =>
         simulation.setDragVector(Point2D(0, 0))
     }
-    cursorPosition = Some(newPos)
-    lastCursorPosition = Some(newPos)
+    cursorState = cursorState.copy(position = Some(newPos), lastPosition = Some(newPos))
   }
 
   private def renderBoids(gc: scalafx.scene.canvas.GraphicsContext): Unit = {
