@@ -54,7 +54,7 @@ object ParameterSlider {
       majorTickUnit,
       blockIncrement,
       formatPattern,
-      (value: Double) => (_: Double) => updateAction(value)
+      (_: Double) => (newValue: Double) => updateAction(newValue)
     )
   }
 
