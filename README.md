@@ -12,7 +12,7 @@ The goal was to explore how simple rules can lead to complex, emergent behavior 
 
 ## Requirements
 
-- Scala (version 2.13.x or compatible)
+- Scala (version 3.3.x or compatible)
 - sbt (Scala Build Tool)
 
 ## How to Run
@@ -20,8 +20,8 @@ The goal was to explore how simple rules can lead to complex, emergent behavior 
 1. Clone the repository:
 
 ```bash
-git clone https://github.com/yourusername/scala-boids-sim.git
-cd scala-boids-sim
+git clone https://github.com/jakubchlapek/boids.git
+cd boids
 ```
 
 2. Run with sbt:
