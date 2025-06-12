@@ -185,9 +185,9 @@ object SimulationConfig {
     wanderStrength = 0.7,
 
     // Flocking behavior parameters
-    cohesionStrength = 0.0005,
-    alignmentStrength = 0.04,
-    separationStrength = 0.7,
+    cohesionStrength = 0.02,
+    alignmentStrength = 0.05,
+    separationStrength = 0.3,
     separationRange = 15.0,
     avoidanceStrength = 1.5,
     predatorAvoidanceRange = 60.0,
