@@ -738,13 +738,16 @@ object GUI extends JFXApp3 {
     case Speed =>
       val speed = boid.velocity.magnitude
       val normalizedSpeed = (speed - simulation.minSpeed) / (simulation.maxSpeed - simulation.minSpeed)
-      val clamped = normalizedSpeed.max(0).min(1)
+      val clamped = normalizedSpeed.max(0.0).min(1.0)
+
       if (clamped < 0.5) {
-        val t = clamped * 2
-        Color(1.0, 1.0 - t, 1.0 - t, 1.0)
+        // from white to yellow
+        val t = clamped * 2.0
+        Color(1.0, 1.0, 1.0 - t, 1.0)  // white (1,1,1) to yellow (1,1,0)
       } else {
-        val t = (clamped - 0.5) * 2
-        Color(t, t, 1.0, 1.0)
+        // from yellow to red
+        val t = (clamped - 0.5) * 2.0
+        Color(1.0, 1.0 - t, 0.0, 1.0)  // yellow (1,1,0) to red (1,0,0)
       }
 
     case Flock =>
