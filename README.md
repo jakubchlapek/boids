@@ -1,8 +1,11 @@
 # Boids Simulation in Scala
 
-This is a basic implementation of a Boids simulation (flocking behavior) written in Scala. It uses core Scala for the simulation logic and ScalaFX for rendering the visuals.
+This is a basic implementation of a Boids simulation (flocking behavior) written in Scala using a voxel-based spatial grid and concurrency. It uses core Scala for the simulation logic and ScalaFX for rendering the visuals. 
 
 The goal was to explore how simple rules can lead to complex, emergent behavior — and to get more comfortable with Scala and GUI development.
+
+The base fluid performance is 1000 boids, but can pretty much handle up to 10k entities, provided you lessen the boid size and maybe the detection ranges.
+The voxel grid scales to the biggest range (detection, hunting or separation)
 
 ## Features
 
