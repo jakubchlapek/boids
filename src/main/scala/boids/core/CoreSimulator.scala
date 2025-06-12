@@ -163,7 +163,7 @@ class CoreSimulator(var config: SimulationConfig) {
     flockingBehavior.predatorAvoidanceRange = predatorAvoidanceRange
 
     // Update spatial manager parameters
-    spatialManager.voxelSize = Seq(detectionRange, separationRange, predatorHuntingRange).max()
+    spatialManager.voxelSize = Seq(detectionRange, separationRange, predatorHuntingRange).max
     spatialManager.detectionRange = detectionRange
     spatialManager.separationRange = separationRange
     spatialManager.huntingRange = predatorHuntingRange

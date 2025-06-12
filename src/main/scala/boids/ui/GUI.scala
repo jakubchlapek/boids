@@ -293,7 +293,7 @@ object GUI extends JFXApp3 {
 
     // Cohesion strength
     val cohesionStrengthSlider = ParameterSlider.forDouble(
-      "Cohesion",
+      "Cohesion Strength",
       "Cohesion Strength",
       cohesionStrength,
       0.0,
@@ -312,7 +312,7 @@ object GUI extends JFXApp3 {
 
     // Alignment strength
     val alignmentStrengthSlider = ParameterSlider.forDouble(
-      "Alignment",
+      "Alignment Strength",
       "Alignment Strength",
       alignmentStrength,
       0.0,
@@ -331,7 +331,7 @@ object GUI extends JFXApp3 {
 
     // Separation strength
     val separationStrengthSlider = ParameterSlider.forDouble(
-      "Separation",
+      "Separation Strength",
       "Separation Strength",
       separationStrength,
       0.0,
@@ -522,7 +522,7 @@ object GUI extends JFXApp3 {
 
     // Predator avoidance strength
     val avoidanceStrengthSlider = ParameterSlider.forDouble(
-      "Predator Avoidance",
+      "Predator Avoidance Strength",
       "Predator Avoidance Strength",
       avoidanceStrength,
       0.1,
@@ -570,8 +570,8 @@ object GUI extends JFXApp3 {
       cohesionStrengthSlider,
       alignmentStrengthSlider,
       separationStrengthSlider,
-      separationRangeSlider,
       avoidanceStrengthSlider,
+      separationRangeSlider,
       predatorAvoidanceRangeSlider,
       cursorInfluenceRangeSlider,
       cursorInfluenceStrengthSlider,
@@ -591,8 +591,15 @@ object GUI extends JFXApp3 {
 
     // split sliders into categories
     val baseEntitySliders = Seq(parameterSliders(1), parameterSliders(3))
-    val boidSliders = Seq(parameterSliders.head, parameterSliders(2), parameterSliders(4), parameterSliders(5))
-    val flockingSliders = parameterSliders.slice(6, 12)
+    val boidSliders = Seq(
+      parameterSliders.head,
+      parameterSliders(2),
+      parameterSliders(4),
+      parameterSliders(5),
+      parameterSliders(10),
+      parameterSliders(11)
+    )
+    val flockingSliders = parameterSliders.slice(6, 10)
     val cursorSliders = parameterSliders.slice(12, 14)
     val predatorSliders = parameterSliders.slice(14, 19)
 
@@ -617,7 +624,9 @@ object GUI extends JFXApp3 {
   }
 
   private def renderBoids(gc: scalafx.scene.canvas.GraphicsContext): Unit = {
-    gc.clearRect(0, 0, gc.canvas.width.value, gc.canvas.height.value)
+    gc.setFill(Color(0, 0, 0, 0.2)) // transparent previous frame for trails
+    gc.fillRect(0, 0, gc.canvas.width.value, gc.canvas.height.value)
+    drawGrid(gc)
 
     simulation.allBoids.foreach { boid =>
       val dir = boid.velocity.normalize()
@@ -682,6 +691,32 @@ object GUI extends JFXApp3 {
         simulation.predatorHuntingRange * 2,
         simulation.predatorHuntingRange * 2
       )
+    }
+  }
+
+  private def drawGrid(gc: scalafx.scene.canvas.GraphicsContext): Unit = {
+    val voxelSize = Seq(
+      simulation.detectionRange,
+      simulation.separationRange,
+      simulation.predatorHuntingRange).max
+    val width = gc.canvas.width.value
+    val height = gc.canvas.height.value
+
+    gc.setStroke(Color(0.5, 0.5, 0.5, 0.8))
+    gc.setLineWidth(0.5)
+
+    // vertical lines
+    var x = 0.0
+    while (x <= width) {
+      gc.strokeLine(x, 0, x, height)
+      x += voxelSize
+    }
+
+    // horizontal lines
+    var y = 0.0
+    while (y <= height) {
+      gc.strokeLine(0, y, width, y)
+      y += voxelSize
     }
   }
 
