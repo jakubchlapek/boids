@@ -38,8 +38,9 @@ class FlockingBehavior(
     val cursor = if (leftMousePressed || rightMousePressed)
       calculateCursorForce(boid, cursorPosition, leftMousePressed, rightMousePressed, dragVector) else Vector2D(0, 0)
     val (predatorAvoidance, isPanicking) = calculatePredatorAvoidanceForce(boid, predators)
+    val boostForce = boid.velocity.normalize() * maxForce * 0.1
 
-    (cohesion + alignment + separation + cursor + predatorAvoidance, isPanicking)
+    (cohesion + alignment + separation + cursor + predatorAvoidance + boostForce, isPanicking)
   }
 
   /** calculate cohesion force - attraction to center of mass */

@@ -6,6 +6,7 @@ import boids.behavior.{FlockingBehavior, PredatorBehavior}
 import boids.config.SimulationConfig
 import boids.physics.{Vector2D, SpatialManager}
 import boids.util.CursorState
+import scala.collection.parallel.CollectionConverters.*
 
 class CoreSimulator(var config: SimulationConfig) {
   // Delegate properties to config
@@ -199,12 +200,11 @@ class CoreSimulator(var config: SimulationConfig) {
   }
 
   def update(changeMade: Boolean): Unit = {
-    if (changeMade)
-      updateSettings()
+    if (changeMade) updateSettings()
 
     val grid = spatialManager.buildGrid(allBoids)
 
-    allBoids.foreach { boid =>
+    val updatedBoids = allBoids.par.map { boid =>
       val neighbors = spatialManager.findNeighbors(boid, grid)
       val closeNeighbors = spatialManager.findCloseNeighbors(boid, neighbors)
 
@@ -212,23 +212,30 @@ class CoreSimulator(var config: SimulationConfig) {
         boid, grid, neighbors, closeNeighbors, allPredators,
         cursorState.position, cursorState.leftPressed, cursorState.rightPressed, dragVector
       )
-      boid.applyForce(force)
 
+      boid.applyForce(force)
       if (!isPanicking)
         boid.applyPhysics(maxSpeed, minSpeed)
       else
         boid.applyPhysics(maxSpeed * flockingBehavior.panicSpeedMultiplier, minSpeed)
 
-      spatialManager.updateBoidPosition(boid)
-    }
+      boid
+    }.toList
 
-    allPredators.foreach { predator =>
-      val target: Option[Boid] = spatialManager.findTarget(predator, grid)
+    updatedBoids.foreach(spatialManager.updateBoidPosition)
+    allBoids = updatedBoids
+
+    val updatedPredators = allPredators.par.map { predator =>
+      val target = spatialManager.findTarget(predator, grid)
       val predatorForce = predatorBehavior.calculatePredatorForces(predator, allBoids, target)
+
       predator.applyForce(predatorForce)
       predator.applyPhysics(maxSpeed, minSpeed)
-      spatialManager.updateBoidPosition(predator)
-    }
 
+      predator
+    }.toList
+
+    updatedPredators.foreach(spatialManager.updateBoidPosition)
+    allPredators = updatedPredators
   }
 }

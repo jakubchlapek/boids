@@ -17,6 +17,8 @@ class SpatialManager(
   private var detectionRangeSquared: Double = detectionRange * detectionRange
   private var separationRangeSquared: Double = separationRange * separationRange
   private var huntingRangeSquared: Double = huntingRange * huntingRange
+  private var fieldOfViewDegrees: Double = 120.0
+  private var fieldOfViewCos: Double = math.cos(math.toRadians(fieldOfViewDegrees) / 2)
 
   def updateRanges(): Unit = {
     detectionRangeSquared = detectionRange * detectionRange
@@ -33,6 +35,14 @@ class SpatialManager(
   def getVoxelCoord(point: Vector2D): VoxelCoord =
     ((point.x / voxelSize).toInt, (point.y / voxelSize).toInt)
 
+  def isInFieldOfView(boid: Boid, other: Boid): Boolean = {
+    val toOther = (other.position - boid.position).normalize()
+    val velocityDir = boid.velocity.normalize()
+    // dot product gives cosine of angle between vectors
+    val dot = velocityDir.dot(toOther)
+    dot >= fieldOfViewCos
+  }
+
   /** find all neighbors within detection range in surrounding voxels */
   def findNeighbors(boid: Boid, voxelGrid: Map[VoxelCoord, Seq[Boid]]): Seq[Boid] = {
     val (voxelX, voxelY) = boid.voxelCoord
@@ -45,7 +55,9 @@ class SpatialManager(
     } yield neighbors
 
     nearbyBoids.flatten.filter(other =>
-      other != boid && other.position.distanceSquared(boid.position) < detectionRangeSquared
+      other != boid
+        && other.position.distanceSquared(boid.position) < detectionRangeSquared
+        && isInFieldOfView(boid, other)
     )
   }
 
@@ -66,7 +78,8 @@ class SpatialManager(
     } yield neighbors
 
     nearbyBoids.flatten
-      .filter(b => b.position.distanceSquared(predator.position) < huntingRangeSquared)
+      .filter(b => b.position.distanceSquared(predator.position) < huntingRangeSquared
+        && isInFieldOfView(predator, b))
       .minByOption(b => b.position.distanceSquared(predator.position))
   }
 

@@ -209,7 +209,7 @@ object GUI extends JFXApp3 {
       "Boids Count",
       boidsCount,
       100,
-      5000,
+      10000,
       500,
       100,
       value => {

@@ -168,13 +168,13 @@ object SimulationConfig {
 
     // Base Entity parameters
     boidSize = 5.0,
-    maxForce = 0.8,
+    maxForce = 0.4,
 
     // Boid parameters
     boidsCount = 1000,
     detectionRange = 40.0,
     maxSpeed = 1.5,
-    minSpeed = 0.1,
+    minSpeed = 0.4,
     panicSpeedMultiplier = 1.5,
 
     // Predator parameters
@@ -185,10 +185,10 @@ object SimulationConfig {
     wanderStrength = 0.7,
 
     // Flocking behavior parameters
-    cohesionStrength = 0.01,
-    alignmentStrength = 0.05,
-    separationStrength = 0.6,
-    separationRange = 20.0,
+    cohesionStrength = 0.0005,
+    alignmentStrength = 0.04,
+    separationStrength = 0.7,
+    separationRange = 15.0,
     avoidanceStrength = 1.5,
     predatorAvoidanceRange = 60.0,
 

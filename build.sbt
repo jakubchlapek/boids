@@ -8,3 +8,4 @@ lazy val root = (project in file("."))
   )
 
 libraryDependencies += "org.scalafx" %% "scalafx" % "24.0.0-R35"
+libraryDependencies += "org.scala-lang.modules" %% "scala-parallel-collections" % "1.2.0"
