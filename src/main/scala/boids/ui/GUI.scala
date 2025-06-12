@@ -1,23 +1,23 @@
 package boids.ui
 
-import boids.ui.UIComponents.{createCategoryPane, createParameterControl}
-import boids.ui.ParameterSlider
 import boids.config.SimulationConfig
-import boids.core.CoreSimulator
+import boids.core.{Boid, CoreSimulator}
 import boids.physics.Vector2D
-import boids.util.CursorState
+import boids.ui.UIComponents.createCategoryPane
+import boids.util.ColorMode.{Flock, Normal, Speed}
+import boids.util.{ColorMode, CursorState}
 import scalafx.Includes.jfxMouseEvent2sfx
 import scalafx.animation.AnimationTimer
 import scalafx.application.JFXApp3
 import scalafx.application.JFXApp3.PrimaryStage
+import scalafx.collections.ObservableBuffer
 import scalafx.geometry.Insets
 import scalafx.scene.Scene
 import scalafx.scene.canvas.Canvas
-import scalafx.scene.control.{Label, ScrollPane, Slider, TitledPane}
+import scalafx.scene.control.{ComboBox, Label, ScrollPane, TitledPane}
 import scalafx.scene.input.MouseButton
-import scalafx.scene.layout.{BorderPane, VBox}
+import scalafx.scene.layout.{AnchorPane, BorderPane, VBox}
 import scalafx.scene.paint.Color
-import scalafx.scene.text.Font
 
 object GUI extends JFXApp3 {
   // use default config for initial values
@@ -60,6 +60,7 @@ object GUI extends JFXApp3 {
   private var cursorState: CursorState = CursorState(None, None, false, false)
   var changeMade = false
   private var simulation: CoreSimulator = _
+  private var currentColorMode: ColorMode = ColorMode.Normal
 
   override def start(): Unit = {
     val canvas = new Canvas(initialWorldWidth, initialWorldHeight)
@@ -101,7 +102,17 @@ object GUI extends JFXApp3 {
       prefWidth = 250
     }
 
-    import scalafx.scene.layout.AnchorPane
+    val colorModeLabel = new Label("Select Color Mode (flock is very slow):")
+    val colorModeCombo = new ComboBox[ColorMode] {
+      items = ObservableBuffer(ColorMode.values.toSeq: _*)
+      value = currentColorMode
+    }
+
+    colorModeCombo.onAction = _ => {
+      currentColorMode = colorModeCombo.value.value
+    }
+
+    sidebarContent.children ++= Seq(colorModeLabel, colorModeCombo)
 
     val canvasPane = new AnchorPane {
       children = canvas
@@ -624,7 +635,7 @@ object GUI extends JFXApp3 {
   }
 
   private def renderBoids(gc: scalafx.scene.canvas.GraphicsContext): Unit = {
-    gc.setFill(Color(0, 0, 0, 0.2)) // transparent previous frame for trails
+    gc.setFill(Color(0, 0, 0, 0.4)) // transparent previous frame for trails
     gc.fillRect(0, 0, gc.canvas.width.value, gc.canvas.height.value)
     drawGrid(gc)
 
@@ -638,7 +649,7 @@ object GUI extends JFXApp3 {
       val baseLeft = boid.position - dir * (size * 0.3) + perp * baseWidth
       val baseRight = boid.position - dir * (size * 0.3) - perp * baseWidth
 
-      gc.setFill(getColorBySpeed(boid.velocity.magnitude))
+      gc.setFill(getBoidColor(boid))
       gc.fillPolygon(
         Array(tip.x, baseLeft.x, baseRight.x),
         Array(tip.y, baseLeft.y, baseRight.y),
@@ -720,16 +731,26 @@ object GUI extends JFXApp3 {
     }
   }
 
-  private def getColorBySpeed(speed: Double): Color = {
-    val normalizedSpeed = (speed - simulation.minSpeed) / (simulation.maxSpeed - simulation.minSpeed)
-    val clampedSpeed = math.min(math.max(0.0, normalizedSpeed), 1.0)
+  def getBoidColor(boid: Boid): Color = currentColorMode match {
+    case Normal =>
+      Color.White
 
-    if (clampedSpeed < 0.5) {
-      val t = clampedSpeed * 2
-      Color(1.0, 1.0 - t, 1.0 - t, 1.0)
-    } else {
-      val t = (clampedSpeed - 0.5) * 2
-      Color(t, t, 1.0, 1.0)
-    }
+    case Speed =>
+      val speed = boid.velocity.magnitude
+      val normalizedSpeed = (speed - simulation.minSpeed) / (simulation.maxSpeed - simulation.minSpeed)
+      val clamped = normalizedSpeed.max(0).min(1)
+      if (clamped < 0.5) {
+        val t = clamped * 2
+        Color(1.0, 1.0 - t, 1.0 - t, 1.0)
+      } else {
+        val t = (clamped - 0.5) * 2
+        Color(t, t, 1.0, 1.0)
+      }
+
+    case Flock =>
+      val avgDir = simulation.boidsAverageDirection.normalize()
+      val alignment = boid.velocity.normalize().dot(avgDir) // -1 to 1
+      val t = (alignment + 1) / 2.0 // 0 to 1
+      Color(t, 1.0 - t, 0.5, 1.0)
   }
 }

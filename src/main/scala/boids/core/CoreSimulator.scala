@@ -74,6 +74,12 @@ class CoreSimulator(var config: SimulationConfig) {
 
   def predatorAvoidanceRange: Double = config.predatorAvoidanceRange
   def predatorAvoidanceRange_=(value: Double): Unit = config = config.withPredatorAvoidanceRange(value)
+
+  def boidsAverageDirection: Vector2D = {
+    if (allBoids.isEmpty) Vector2D(0, 0)
+    else allBoids.map(_.velocity.normalize()).reduce(_ + _) / allBoids.size
+  }
+  
   private var cursorState = CursorState(None, None, false, false)
   private var dragVector: Vector2D = Vector2D(0, 0)
 
