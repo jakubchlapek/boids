@@ -44,6 +44,7 @@ object GUI extends JFXApp3 {
   private var separationStrength: Double      = defaultConfig.separationStrength
   private var separationRange: Double         = defaultConfig.separationRange
   private var predatorAvoidanceRange: Double  = defaultConfig.predatorAvoidanceRange
+  private var avoidanceStrength: Double       = defaultConfig.avoidanceStrength
 
   // cursor interaction parameters
   private var cursorInfluenceRange: Double    = defaultConfig.cursorInfluenceRange
@@ -55,7 +56,6 @@ object GUI extends JFXApp3 {
   private var predatorSpeedMultiplier: Double = defaultConfig.predatorSpeedMultiplier
   private var huntingStrength: Double         = defaultConfig.huntingStrength
   private var wanderStrength: Double          = defaultConfig.wanderStrength
-  private var avoidanceStrength: Double       = defaultConfig.avoidanceStrength
 
   private var cursorState: CursorState = CursorState(None, None, false, false)
   var changeMade = false
@@ -439,7 +439,6 @@ object GUI extends JFXApp3 {
         predatorHuntingRange = value
         if (simulation != null) {
           simulation.predatorHuntingRange = predatorHuntingRange
-          simulation.reinitializePredators()
           changeMade = true
         }
       }
@@ -459,7 +458,6 @@ object GUI extends JFXApp3 {
         predatorSpeedMultiplier = value
         if (simulation != null) {
           simulation.predatorSpeedMultiplier = predatorSpeedMultiplier
-          simulation.reinitializePredators()
           changeMade = true
         }
       }
@@ -673,6 +671,16 @@ object GUI extends JFXApp3 {
         first.position.y - simulation.separationRange,
         simulation.separationRange * 2,
         simulation.separationRange * 2
+      )
+    }
+    simulation.allPredators.headOption.foreach { first =>
+      gc.setStroke(Color.Red)
+      gc.setLineWidth(1)
+      gc.strokeOval(
+        first.position.x - simulation.predatorHuntingRange,
+        first.position.y - simulation.predatorHuntingRange,
+        simulation.predatorHuntingRange * 2,
+        simulation.predatorHuntingRange * 2
       )
     }
   }

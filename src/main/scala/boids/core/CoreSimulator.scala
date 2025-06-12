@@ -103,6 +103,7 @@ class CoreSimulator(var config: SimulationConfig) {
     voxelSize = detectionRange,
     detectionRange = detectionRange,
     separationRange = separationRange,
+    huntingRange = predatorHuntingRange,
     worldWidth = worldWidth,
     worldHeight = worldHeight
   )
@@ -138,7 +139,6 @@ class CoreSimulator(var config: SimulationConfig) {
         position = Vector2D(x, y),
         velocity = initialVelocity,
         voxelCoord = spatialManager.getVoxelCoord(Vector2D(x, y)),
-        huntingRange = predatorHuntingRange,
         speedMultiplier = predatorSpeedMultiplier
       )
     }
@@ -163,9 +163,10 @@ class CoreSimulator(var config: SimulationConfig) {
     flockingBehavior.predatorAvoidanceRange = predatorAvoidanceRange
 
     // Update spatial manager parameters
-    spatialManager.voxelSize = detectionRange
+    spatialManager.voxelSize = Seq(detectionRange, separationRange, predatorHuntingRange).max()
     spatialManager.detectionRange = detectionRange
     spatialManager.separationRange = separationRange
+    spatialManager.huntingRange = predatorHuntingRange
     spatialManager.worldWidth = worldWidth
     spatialManager.worldHeight = worldHeight
     spatialManager.updateRanges()
@@ -178,7 +179,6 @@ class CoreSimulator(var config: SimulationConfig) {
     // Update predator parameters
     allPredators.foreach { predator =>
       predator.speedMultiplier = predatorSpeedMultiplier
-      predator.huntingRange = predatorHuntingRange
     }
   }
 
@@ -217,7 +217,8 @@ class CoreSimulator(var config: SimulationConfig) {
     }
 
     allPredators.foreach { predator =>
-      val predatorForce = predatorBehavior.calculatePredatorForces(predator, allBoids)
+      val target: Option[Boid] = spatialManager.findTarget(predator, grid)
+      val predatorForce = predatorBehavior.calculatePredatorForces(predator, allBoids, target)
       predator.applyForce(predatorForce)
       predator.applyPhysics(maxSpeed, minSpeed)
       spatialManager.updateBoidPosition(predator)

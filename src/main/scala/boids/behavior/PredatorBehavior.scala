@@ -31,10 +31,10 @@ class PredatorBehavior(
     wanderForce * wanderStrength
   }
 
-  def calculatePredatorForces(predator: Predator, boids: Seq[Boid]): Vector2D = {
-    predator.findTarget(boids) match {
-      case Some(target) =>
-        calculateHuntingForce(predator, target)
+  def calculatePredatorForces(predator: Predator, boids: Seq[Boid], target: Option[Boid]): Vector2D = {
+    target match {
+      case Some(tgt) =>
+        calculateHuntingForce(predator, tgt)
       case None =>
         calculateWanderForce(predator)
     }

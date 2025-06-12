@@ -1,6 +1,6 @@
 package boids.physics
 
-import boids.core.Boid
+import boids.core.{BaseEntity, Boid, Predator}
 
 type VoxelCoord = (Int, Int)
 
@@ -10,15 +10,18 @@ class SpatialManager(
                       var voxelSize: Double,
                       var detectionRange: Double,
                       var separationRange: Double,
+                      var huntingRange: Double,
                       var worldWidth: Double,
                       var worldHeight: Double
                     ):
   private var detectionRangeSquared: Double = detectionRange * detectionRange
   private var separationRangeSquared: Double = separationRange * separationRange
+  private var huntingRangeSquared: Double = huntingRange * huntingRange
 
   def updateRanges(): Unit = {
     detectionRangeSquared = detectionRange * detectionRange
     separationRangeSquared = separationRange * separationRange
+    huntingRangeSquared = huntingRange * huntingRange
   }
 
   /** group boids by VoxelCoord */
@@ -51,6 +54,20 @@ class SpatialManager(
     neighbors.filter(
       neighbor => neighbor.position.distanceSquared(boid.position) < separationRangeSquared
     )
+  }
+
+  def findTarget(predator: Predator, voxelGrid: Map[VoxelCoord, Seq[Boid]]): Option[Boid] = {
+    val (voxelX, voxelY) = predator.voxelCoord
+
+    val nearbyBoids = for {
+      dx <- -1 to 1
+      dy <- -1 to 1
+      neighbors <- voxelGrid.get((voxelX + dx, voxelY + dy)).toSeq
+    } yield neighbors
+
+    nearbyBoids.flatten
+      .filter(b => b.position.distanceSquared(predator.position) < huntingRangeSquared)
+      .minByOption(b => b.position.distanceSquared(predator.position))
   }
 
   /** moves a boid based on its velocity */
